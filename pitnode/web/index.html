@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>PitNode</title>
+
+  <!-- Pico.css -->
+  <link rel="stylesheet" href="/pico.min.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="container">
+  <nav>
+    <ul>
+      <li>
+        <!-- LOGO -->
+        <img src="/logo.svg" alt="PitNode" style="height:2rem;">
+      </li>
+      <li><strong>PitNode</strong></li>
+    </ul>
+
+    <ul>
+      <li id="wifi-indicator" title="WLAN Signal">
+        📶
+      </li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ================= MENU ================= -->
+<nav class="container">
+  <ul>
+    <li><a href="#">Dashboard</a></li>
+    <li><a href="#">Settings</a></li>
+  </ul>
+</nav>
+
+<!-- ================= MAIN ================= -->
+<main class="container">
+
+  <section id="channels">
+    <!-- Dynamisch durch JS -->
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="container">
+  <small>
+    © PitNode ·
+    <a href="https://www.pitnode.de" target="_blank">
+      www.pitnode.de
+    </a>
+  </small>
+</footer>
+
+<script>
+let userInteracting = false;
+let temps = [];
+let targets = [];
+let alarms = [];
+let debounceTimer = null;
+const DEBOUNCE_MS = 100;   // 150–300 ms sind ideal
+
+const ws = new WebSocket("ws://" + location.host + "/ws");
+
+ws.onopen = () => console.log("WS open");
+ws.onmessage = e => handleMessage(e.data);
+
+function handleMessage(msg) {
+  const data = JSON.parse(msg);
+
+  switch (data.type) {
+    case "temp":
+      temps[data.ch] = data.value;
+      break;
+
+    case "target":
+      targets[data.ch] = data.value;
+      break;
+
+    case "alarm":
+      alarms[data.ch] = data.value;
+      break;
+
+    default:
+      return;
+  }
+
+  rebuildUI();
+}
+
+
+function rebuildUI() {
+  if (userInteracting) return;
+
+  const count = Math.max(temps.length, targets.length);
+  const root = document.getElementById("channels");
+  root.innerHTML = "";
+
+  for (let ch = 0; ch < count; ch++) {
+    const t = temps[ch];
+    const tt = targets[ch] ?? 0;
+
+    if (typeof t !== "number") continue;
+
+    const article = document.createElement("article");
+    article.innerHTML = `
+      <header>Channel ${ch}</header>
+      <p>IST: <strong>${t.toFixed(1)} °C</strong></p>
+
+      <label>
+        SOLL: <output id="val${ch}">${tt}</output> °C
+        <input type="range" min="0" max="300" value="${tt}"
+          onpointerdown="startInteraction()"
+          onpointerup="endInteraction()"
+          oninput="sliderChange(${ch}, this.value)">
+      </label>
+    `;
+    root.appendChild(article);
+  }
+}
+
+function sliderChange(ch, value) {
+  targets[ch] = Number(value);
+  document.getElementById("val" + ch).innerText = value;
+
+  // ---- Debounce ----
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+
+  debounceTimer = setTimeout(() => {
+    ws.send(JSON.stringify({
+      cmd: "set_targets",
+      values: targets
+    }));
+  }, DEBOUNCE_MS);
+}
+
+function startInteraction() {
+  userInteracting = true;
+}
+
+function endInteraction() {
+  userInteracting = false;
+}
+
+</script>
+
+</body>
+</html>

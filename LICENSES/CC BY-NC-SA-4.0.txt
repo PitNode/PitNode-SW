@@ -1,0 +1,89 @@
+# Hardware License – CC BY-NC-SA 4.0 (Adapted for Hardware)
+
+Copyright (c) 2026 Philipp Geisseler
+
+This hardware design (including but not limited to schematics, PCB layouts, Gerber files,
+mechanical designs, enclosure designs, and documentation) is licensed under the
+
+Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International License  
+(CC BY-NC-SA 4.0)
+
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+---
+
+## You are free to:
+
+### ✔ Share
+Copy and redistribute the material in any medium or format.
+
+### ✔ Adapt
+Remix, transform, and build upon the material.
+
+---
+
+## Under the following terms:
+
+### Attribution
+You must give appropriate credit, provide a link to this license,
+and indicate if changes were made.  
+You may do so in any reasonable manner, but not in any way that suggests
+the licensor endorses you or your use.
+
+### NonCommercial
+You may **not** use this material, or products derived from it,
+for **commercial purposes**.
+
+This includes, but is not limited to:
+- Selling PCBs, kits, or assembled devices
+- Selling enclosures or mechanical parts based on these designs
+- Offering paid services based on the hardware design
+
+Commercial use is only permitted with **explicit written permission**
+from the copyright holder.
+
+### ShareAlike
+If you remix, transform, or build upon the material,
+you must distribute your contributions under the **same license**
+(CC BY-NC-SA 4.0).
+
+---
+
+## What this license allows
+
+- ✔ Private use
+- ✔ Educational use
+- ✔ Research and experimentation
+- ✔ Non-commercial modifications and forks
+- ✔ Publishing modified designs under the same license
+
+---
+
+## What this license does NOT allow
+
+- ❌ Selling the hardware or derived products
+- ❌ Using the design in commercial products or services
+- ❌ Relicensing under more permissive or proprietary terms
+
+---
+
+## Trademarks
+
+This license does **not** grant any rights to use the project name,
+logos, or trademarks.
+
+Project names and logos are protected separately and may not be used
+to imply endorsement or official origin.
+
+---
+
+## Disclaimer
+
+This hardware design is provided "as is", without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose, and noninfringement.
+
+The authors shall not be liable for any claim, damages, or other liability,
+whether in an action of contract, tort, or otherwise, arising from,
+out of, or in connection with the hardware or the use or other dealings
+in the hardware.
