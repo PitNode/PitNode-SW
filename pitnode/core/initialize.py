@@ -10,10 +10,10 @@ import gui.fonts.icons as icons
 from gui.core.colors import *
 from gui.core.tgui import ssd
 
-import pitnode.hw_config as hw_cfg
-import pitnode.config as cfg
-from pitnode.controller import PitNodeCtrl as Ctrl
-from pitnode.controller import NtcProbe
+import pitnode.driver.hw_config as hw_cfg
+import config as cfg
+from pitnode.core.controller import PitNodeCtrl as Ctrl
+from pitnode.core.controller import NtcProbe
 
 assert len(cfg.T_NTC_0_MK) == hw_cfg.PROBE_CHANNELS
 assert len(cfg.BETA_K) == hw_cfg.PROBE_CHANNELS

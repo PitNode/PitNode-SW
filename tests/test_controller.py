@@ -4,8 +4,8 @@
 # https://www.pitnode.de
 
 import pytest
-import pitnode.config as config
-from pitnode.controller import PitNodeCtrl, NtcProbe
+import config as config
+from pitnode.core.controller import PitNodeCtrl, NtcProbe
 from pitnode.driver.mock_hw import MockHw
 
 T_NTC_0_MK = [298150, 298150, 298150] # in mK

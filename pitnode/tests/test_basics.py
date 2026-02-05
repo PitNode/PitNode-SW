@@ -1,8 +1,8 @@
 import asyncio
 
-from pitnode.controller import PitNodeCtrl as Ctrl
+from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.driver.rpi_pico import RPiPico as Pico
-import pitnode.hw_config as hw_cfg
+import pitnode.driver.hw_config as hw_cfg
 
 async def test_buzzer():
     for _ in range(5):

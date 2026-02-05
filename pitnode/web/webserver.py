@@ -8,7 +8,7 @@ import gc
 
 from pitnode.web.websocket import handle_websocket
 from pitnode.log.log import error, info
-from pitnode.config import SERVER_START_TIMEOUT
+from config import SERVER_START_TIMEOUT
 
 
 class WebServer:

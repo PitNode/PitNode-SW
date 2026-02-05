@@ -6,7 +6,7 @@
 
 import asyncio
 
-from pitnode.controller import PitNodeCtrl as Ctrl
+from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.log.log import info, warn, error
 
 class PitNodePresenter:

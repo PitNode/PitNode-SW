@@ -5,7 +5,7 @@
 
 from machine import ADC, SoftSPI, Pin, PWM, reset
 import pitnode.driver.max6675 as max6675
-import pitnode.hw_config as hw_cfg
+import pitnode.driver.hw_config as hw_cfg
 
 #for pin in hw_cfg.GPIO_PINS:
 #   Pin(pin, Pin.IN, Pin.PULL_DOWN)

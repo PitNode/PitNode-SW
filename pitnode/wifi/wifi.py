@@ -6,7 +6,7 @@
 import network
 import gc
 import asyncio
-from pitnode.config import ENABLE_WIFI
+from config import ENABLE_WIFI
 from pitnode.storage.secrets import load_password, load_ssid
 from pitnode.log.log import error, info, warn
 

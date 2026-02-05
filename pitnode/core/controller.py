@@ -6,9 +6,9 @@
 import time
 import asyncio
 from math import log
-import pitnode.config as cfg
-from pitnode.hw_config import ProbeState
-import pitnode.hw_config as hw_cfg
+import config as cfg
+from pitnode.driver.hw_config import ProbeState
+import pitnode.driver.hw_config as hw_cfg
 from pitnode.log.log import info, warn, error
 
 # Validation helper functions

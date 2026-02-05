@@ -10,11 +10,11 @@ from gui.core.tgui import Screen
 from gui.widgets import Label, Button, CloseButton
 from gui.core.colors import *
 
-from pitnode.initialize import wrt_md_red
+from pitnode.core.initialize import wrt_md_red
 from pitnode.storage.secrets import save_password, save_ssid
-import pitnode.config as cfg
+import config as cfg
 from pitnode.log.log import error, info
-from pitnode.ui.screen_wifi import WLANsetupScreen
+from pitnode.ui.ugui_app.screen_wifi import WLANsetupScreen
 
 class ConfigScreen(Screen):
     presenter = None

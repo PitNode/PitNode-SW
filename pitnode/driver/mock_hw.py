@@ -3,7 +3,7 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import pitnode.hw_config as hw_cfg
+import pitnode.driver.hw_config as hw_cfg
 
 class DummyBuzzer():
     pass

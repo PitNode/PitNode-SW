@@ -6,11 +6,11 @@
 from machine import reset
 import asyncio
 
-from pitnode.controller import PitNodeCtrl
-from pitnode.ui.presenter import PitNodePresenter
+from pitnode.core.controller import PitNodeCtrl
+from pitnode.core.presenter import PitNodePresenter
 from pitnode.wifi.wifi import WiFiWrapper
 from pitnode.web.webserver import WebServer
-import pitnode.config as cfg
+import config as cfg
 from pitnode.log.log import error, info
 import gc
 

@@ -6,7 +6,7 @@
 import time
 import gc
 
-import pitnode.config as cfg
+import config as cfg
 from pitnode.log.log import error, info
 
 JITTER_WARN_MS = 10
