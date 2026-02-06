@@ -10,9 +10,13 @@ User configuration file for PitNode
 # Unit for temperature "deg" or "far"
 UNIT = "deg"
 
+# Probe parameters
 T_NTC_0_MK = [298150, 298150, 298150] # in mK
 BETA_K = [3977, 3977, 3977] # in K
 R_NTC_0_OHM = [100000, 100000, 100000] # in Ohm
+
+# Probe to ADC channel assignment
+PROBES = ["NTC", "NTC", "NTC"]
 
 ENABLE_WIFI = True
 SERVER_START_TIMEOUT = 3

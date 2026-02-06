@@ -12,6 +12,7 @@ from pitnode.wifi.wifi import WiFiWrapper
 from pitnode.web.webserver import WebServer
 import config as cfg
 from pitnode.log.log import error, info
+from pitnode.core.probe_setup import setup_probes
 import gc
 
 
@@ -85,6 +86,7 @@ class App:
             info("No WiFi connection established. Webserver will not be started.")
 
     async def start(self):
+        setup_probes()
         await self.controller.start_pitnode_ctrl()
         self._wifi_task = asyncio.create_task(
             self._wait_for_gui_and_start_wifi()

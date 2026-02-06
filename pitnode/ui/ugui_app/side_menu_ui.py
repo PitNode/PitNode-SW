@@ -2,7 +2,7 @@ import asyncio
 
 from gui.core.tgui import Screen, Window
 from gui.widgets import Label, Button
-from pitnode.core.initialize import wrt_icon
+from pitnode.ui.ugui_app.ugui_init import wrt_icon
 from gui.core.colors import *
 from pitnode.ui.ugui_app.screen_config import ConfigScreen
 from pitnode.log.log import error, info

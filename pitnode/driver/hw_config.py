@@ -98,12 +98,3 @@ LCD_HEIGHT = const(240)
 ADC_MIN_MV = 20 # ADC almost 0
 ADC_MAX_MV = V_ADC_REF_MV - 20
 R_MAX_OHM = 1_000_000  # 1 MOhm
-
-class ProbeState:
-    OK = const(0)
-    OPEN = const(1)
-    SHORT = const(2)
-    INVALID = const(3)
-
-OPEN_THRESHOLD = const(3)
-VALID_THRESHOLD = const(2)

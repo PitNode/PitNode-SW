@@ -11,7 +11,7 @@ from gui.core.writer import CWriter
 from gui.widgets import Label, Button, CloseButton, Pad, Dropdown, Grid
 from gui.core.colors import *
 
-from pitnode.core.initialize import wrt_icon, wrt_keyboard
+from pitnode.ui.ugui_app.ugui_init import wrt_icon, wrt_keyboard
 from pitnode.storage.secrets import save_password
 import config as cfg
 from pitnode.log.log import error, info

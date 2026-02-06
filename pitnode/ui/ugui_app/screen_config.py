@@ -10,7 +10,7 @@ from gui.core.tgui import Screen
 from gui.widgets import Label, Button, CloseButton
 from gui.core.colors import *
 
-from pitnode.core.initialize import wrt_md_red
+from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.storage.secrets import save_password, save_ssid
 import config as cfg
 from pitnode.log.log import error, info

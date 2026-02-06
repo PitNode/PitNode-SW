@@ -14,11 +14,11 @@ from gui.core.writer import CWriter
 from gui.widgets import Label, CloseButton
 from gui.core.colors import *
 
-from pitnode.core.initialize import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.channel_ui import ChannelUI, BBQchUI
 from pitnode.ui.ugui_app.side_menu_ui import SideMenu
 import config as cfg
-from pitnode.driver.hw_config import ProbeState
+from pitnode.core.probe import ProbeState
 from pitnode.log.log import error, info
 
 

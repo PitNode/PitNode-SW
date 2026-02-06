@@ -1,6 +1,6 @@
 from gui.core.tgui import Screen, Window
 from gui.widgets import Label, Button, CloseButton
-from pitnode.core.initialize import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from gui.core.colors import *
 
 class ChannelUI:
