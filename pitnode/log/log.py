@@ -3,18 +3,20 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+import config as cfg
+
 INFO  = 1
 WARN  = 2
 ERROR = 3
 
-_level = INFO
+_level = ERROR
 
 def set_level(level):
     global _level
     _level = level
 
 def _log(level, tag, msg):
-    if level < _level:
+    if not cfg.DEV_MODE and level < _level:
         return
     print("[%s] %s" % (tag, msg))
 
@@ -27,4 +29,4 @@ def warn(msg):
 def error(msg):
     _log(ERROR, "E", msg)
 
-#set_level(_level)
+set_level(_level)

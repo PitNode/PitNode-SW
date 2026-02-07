@@ -55,7 +55,7 @@ class WiFiWrapper:
             info("[WIFI] No password or SSID for WiFi set. Skipping.")
             return False
         
-        print("Verbinde WLAN:", ssid)
+        info("Verbinde WLAN: {ssid}")
         return await self.connect_sta(ssid, pw)
 
     async def stop(self):

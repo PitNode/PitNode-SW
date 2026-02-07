@@ -10,7 +10,7 @@ from gui.core.tgui import Screen
 from gui.widgets import Label, Button, CloseButton
 from gui.core.colors import *
 
-from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import wrt_keyboard, wrt_md_red
 from pitnode.storage.secrets import save_password, save_ssid
 import config as cfg
 from pitnode.log.log import error, info
@@ -96,22 +96,29 @@ class WlanConfig(Screen):
         self.presenter.abort_wifi_config() #type:ignore
 
     async def _update_networks(self):
+        last_networks = None
         try:
             while True:
-                networks = self.presenter.get_wifi_networks() #type:ignore
-                if networks and not self._shown:
+                networks = self.presenter.get_wifi_networks()  # type: ignore
+
+                if networks and networks != last_networks:
+                    self._net_labels.clear()
+
                     Label(wrt_md_red, 30, 10, "Available networks")
 
                     for idx, net in enumerate(networks):
                         btn = Button(
-                            wrt_md_red,
-                            50 + idx * 24,
+                            wrt_keyboard,
+                            54 + idx * 28,
                             20,
+                            height=26,
                             text=net,
-                            callback=self._on_select, #type:ignore
+                            callback=self._on_select,
                         )
                         self._net_labels.append(btn)
-                    self._shown = True
+
+                    last_networks = list(networks)
+
                 await asyncio.sleep(0.5)
         except asyncio.CancelledError:
             raise

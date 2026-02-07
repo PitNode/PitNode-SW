@@ -51,8 +51,8 @@ class ChannelUI:
         lbl_meas=Label(
             wrt_lg_temp,
             lbl_head_meas.mrow + 2,
-            col + 20,
-            60,
+            col + 10,
+            70,
             fgcolor=fgcolor,
             justify=Label.LEFT,
             bgcolor=bgcolor,

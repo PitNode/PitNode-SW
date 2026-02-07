@@ -22,4 +22,4 @@ ENABLE_WIFI = True
 SERVER_START_TIMEOUT = 3
 
 # Flag is only for development
-DEV_MODE = True
+DEV_MODE = False

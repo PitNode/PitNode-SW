@@ -2,24 +2,78 @@
 set -e
 
 PORT=${1:-auto}
+MPREMOTE="mpremote connect $PORT"
 
 echo "=== Deploy PitNode ==="
 echo "Using port: $PORT"
 echo
 
-MPREMOTE="mpremote connect $PORT"
+# ---------- helper ----------
+mp_mkdir() {
+    $MPREMOTE exec "
+import os
+path='$1'
+parts = path.split('/')
+cur = ''
+for p in parts:
+    if not p:
+        continue
+    cur = cur + '/' + p if cur else p
+    try:
+        os.mkdir(cur)
+    except OSError:
+        pass
+"
+}
 
+# ---------- root files ----------
 echo "--- Copy root files ---"
 $MPREMOTE cp main.py :
 $MPREMOTE cp touch_setup.py :
 $MPREMOTE cp config.py :
 
-echo "--- Copy pitnode package ---"
-$MPREMOTE cp -r pitnode :
+# ---------- pitnode ----------
+echo "--- Create pitnode directories ---"
+find pitnode -type d -name "__pycache__" -prune -o -type d -print | while read d; do
+    mp_mkdir "$d"
+done
 
-echo "--- Copy UI frameworks ---"
-$MPREMOTE cp -r gui :
-$MPREMOTE cp -r drivers :
+
+echo "--- Copy pitnode files ---"
+find pitnode -type d -name "__pycache__" -prune -o -type f -name "*.py" -print | while read f; do
+    $MPREMOTE cp "$f" ":$f"
+done
+
+# ---------- web assets ----------
+echo "--- Create web asset directories ---"
+find pitnode/web \
+  -type d -print | while read d; do
+    mp_mkdir "$d"
+done
+
+echo "--- Copy web assets ---"
+find pitnode/web \
+  -type f \( \
+    -name "*.html" -o \
+    -name "*.css"  -o \
+    -name "*.js"   -o \
+    -name "*.json" -o \
+    -name "*.ico" \
+  \) -print | while read f; do
+    $MPREMOTE cp "$f" ":$f"
+done
+
+# ---------- GUI / drivers ----------
+echo "--- Create GUI directories ---"
+find gui drivers -type d -name "__pycache__" -prune -o -type d -print | while read d; do
+    mp_mkdir "$d"
+done
+
+echo "--- Copy GUI files ---"
+find gui drivers -type d -name "__pycache__" -prune -o -type f -name "*.py" -print | while read f; do
+    $MPREMOTE cp "$f" ":$f"
+done
 
 echo
 echo "=== Deploy finished ==="
+

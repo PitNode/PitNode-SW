@@ -58,7 +58,6 @@ class WLANsetupScreen(Screen):
         CloseButton(wrt_keyboard)
 
     def on_ok(self, _):
-        info(self.lbltxt.value())
         Label(wrt_keyboard, 100, 10, text="Rebooting in 3 seconds...", fgcolor=WHITE, bgcolor=RED, bdcolor=False)
         if not cfg.DEV_MODE:
             save_password(self.lbltxt.value()[:-1])
