@@ -6,10 +6,11 @@
 import asyncio
 import gc
 import time
+from math import sin
 from micropython import const
 
 import touch_setup as touch_setup
-from gui.core.tgui import Screen, ssd
+from gui.core.tgui import Screen, ssd, display
 from gui.core.writer import CWriter
 from gui.widgets import Label, CloseButton
 from gui.core.colors import *
@@ -20,6 +21,7 @@ from pitnode.ui.ugui_app.side_menu_ui import SideMenu
 import config as cfg
 from pitnode.core.probe import ProbeState
 from pitnode.log.log import error, info
+from pitnode.ui.ugui_app.colors import *
 
 
 # GUI definitions
@@ -32,7 +34,7 @@ COL1_W = const(70)  # Column 1 width in px
 COL2_W = const(130)  # Column 1 width in px
 CH_ROW_START = HEADER_H + 2
 CH_COL_START = MARGIN_LR
-BG_COLOR = BLACK  # Background color
+BG_COLOR = BG  # Background color
 LINE_COLOR = GREY  # Color of GUI lines
 CH_COLORS = [YELLOW, GREEN, MAGENTA]
 CH_SPACING = int((ssd.height - (HEADER_H + 2)) / CH_PPAGE)
@@ -55,23 +57,34 @@ class MeasureScreen(Screen):
         self.presenter.attach_screen(self)
         self.reg_task(self._get_temp_loop(), on_change=False)
         self.reg_task(self._get_alarms_loop(), on_change=False)
-
+        self._pulse_tasks = [None] * self.presenter.get_num_probe_channels()
+        self.ch_color = [CH1_COL, CH2_COL, CH3_COL]
+        self.ch_rgb = [CH_1_RGB, CH_2_RGB, CH_3_RGB]
         self.num_channels_pp = CH_PPAGE
         self.temp_labels = []
         self.target_labels = []
         self.tc_temp_label = None
+        self.ledbars = []
         self.inc_buttons = []
         self.dec_buttons = []
         self.config_button = None
-        
         self.width = ssd.width
         self._create_layout()
         # self._create_buttons()
         # self._bind_events()
 
     def after_open(self):
-        #self._header()
-        pass
+        # Divider for header
+        ssd.hline(10, 40, 310, DIVIDER_1)
+        ssd.hline(10, 41, 310, DIVIDER_2)
+
+        # Divider for col.
+        ssd.vline(106, 50, 160, DIVIDER_1)
+        ssd.vline(107, 50, 160, DIVIDER_2)
+
+        # Divider for col.
+        ssd.vline(212, 50, 160, DIVIDER_1)
+        ssd.vline(213, 50, 160, DIVIDER_2)
 
     #--- LCD Layout ---#
     def _create_layout(self):
@@ -89,17 +102,18 @@ class MeasureScreen(Screen):
         Per-channel rows: temperature, target, +/- buttons
         """
         num_ch = self.presenter.get_num_probe_channels() # type:ignore
-        start_col = ssd.width - (num_ch * 90) # type:ignore
-        fgcolor = [WHITE, WHITE, WHITE]
-        bgcolor = [MAGENTA, GREEN, BLUE]
+        col_width = ssd.width // num_ch 
+        row_meas_card = 40
+        
         for ch in range(num_ch): # type:ignore
             ch_ui = ChannelUI(ch, self.presenter)
-            ch_ui.ch_card(10, start_col+(ch*88), fgcolor[ch], bgcolor[ch])
+            ch_ui.ch_card(row_meas_card, 0+(ch*col_width), 150, 86, self.ch_color[ch])
             self.temp_labels.append(ch_ui.temp_label)
             self.target_labels.append(ch_ui.target_label)
+            self.ledbars.append(ch_ui.ledbar)
         
         bbq_ui = BBQchUI()
-        bbq_ui.bbq_card(170, start_col, WHITE, BLACK)
+        bbq_ui.bbq_card(0, 0, ACCENT_GRILL, DEF_BG)
         self.tc_temp_label = bbq_ui.temp_label
 
     def _create_buttons(self):
@@ -127,8 +141,16 @@ class MeasureScreen(Screen):
         self.presenter.reset_alarm(ch) # type: ignore
 
     #--- Update functions ---#
-    def set_alarm(self, ch, state):
-        self.temp_labels[ch].value(invert=bool(state))
+    def set_alarm(self, ch, alarm_state):
+        #self.temp_labels[ch].value(invert=bool(state))
+        if alarm_state:
+            if self._pulse_tasks[ch] is None:
+                self._pulse_tasks[ch] = self.reg_task(self._pulse_ledbar(ch),  on_change=False)
+        else:
+            task = self._pulse_tasks[ch]
+            if task is not None:
+                task.cancel()
+                self._pulse_tasks[ch] = None
 
     def update_tc_temp(self, value, state):
         if value is None:
@@ -136,15 +158,17 @@ class MeasureScreen(Screen):
         if state != ProbeState.OK:
             self.tc_temp_label.value("---.-") # type: ignore
         else:
-            self.tc_temp_label.value("{:.1f}".format(value)) # type: ignore
+            self.tc_temp_label.value("{:.0f}".format(value)) # type: ignore
 
     def update_temp(self, ch, value, state):
         if value is None:
-            self.temp_labels[ch].value("--.-")
+            self.temp_labels[ch].value("---")
         if state != ProbeState.OK:
-            self.temp_labels[ch].value("--.-")
+            self.temp_labels[ch].value("---")
         else:
-            self.temp_labels[ch].value("{:.1f}".format(value))
+            new_text = "{:.0f}".format(value)
+            if self.temp_labels[ch].value() != new_text:
+                self.temp_labels[ch].value(new_text)
 
     def update_target(self, ch, value):
         # f"{Ctrl.get_temp(ch):,.2f}
@@ -178,4 +202,31 @@ class MeasureScreen(Screen):
                 await asyncio.sleep_ms(500)
         except asyncio.CancelledError:
             info("[SCR] Alarm update task stopped")
+            raise
+
+    async def _pulse_ledbar(self, ch):
+        def triangle_wave(period_ms=1000):
+            t = time.ticks_ms() % period_ms
+            half = period_ms // 2
+
+            if t < half:
+                return (t * 255) // half
+            else:
+                return ((half - (t - half)) * 255) // half
+
+        try:
+            info("[SCR] Pulse lable task started")
+            while True:
+                brightness = triangle_wave(1000)
+                min_brightness = 80
+                brightness = min_brightness + ((brightness * (255 - min_brightness)) // 255)
+                base = self.ch_rgb[ch]
+                r = (base[0] * brightness) // 255
+                g = (base[1] * brightness) // 255
+                b = (base[2] * brightness) // 255
+                self.ledbars[ch].color(SSD.rgb(r, g, b))
+                await asyncio.sleep_ms(50)
+        except asyncio.CancelledError:
+            info("[SCR] Pulse lable task stopped")
+            self.ledbars[ch].color(self.ch_color[ch])
             raise

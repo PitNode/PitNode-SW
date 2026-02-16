@@ -11,21 +11,21 @@ class SideMenu:
     def __init__(self, presenter, screen) -> None:
         self.presenter = presenter
         self.screen = screen
-        row=10
-        col=4
+        row=2
+        col=200
         
         lbl_wifi = Label(
             wrt_icon,
             row,
-            col+8,
+            col,
             "D", # Wifi Icon
         )
         self.wifi_label = lbl_wifi
 
         btn_cfg = Button(
             wrt_icon,
-            self.wifi_label.mrow,
-            col,
+            row,
+            lbl_wifi.mcol+4,
             text="B",
             callback=self._config_screen,
             height=40,

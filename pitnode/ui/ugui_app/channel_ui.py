@@ -1,95 +1,82 @@
 from gui.core.tgui import Screen, Window
-from gui.widgets import Label, Button, CloseButton
+from gui.widgets import Label, Button, CloseButton, Pad
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from gui.core.colors import *
+from pitnode.ui.ugui_app.colors import *
+from pitnode.log.log import error, info
+from pitnode.ui.ugui_app.widgets.led_bar import LEDBAR
 
 class ChannelUI:
     def __init__(self, ch, presenter) -> None:
         self.temp_label = None
         self.target_label = None
         self.ch = ch
+        self.ledbar = None
         self.presenter = presenter
 
-    def ch_card(self, row, col, fgcolor, bgcolor):
-        f_lg_h = wrt_lg_temp.height
+    def ch_card(self, row, col, height, width, ch_color):
+        ledbar_row = row+10
+        ledbar_col = col+4
+        row_meas = row + height//2 - wrt_lg_temp.height//2
+        row_target = row_meas + wrt_lg_temp.height + 40
+
+        # CH marker
+        self.ledbar = LEDBAR(wrt_md_red, ledbar_row, ledbar_col, height=6, width=74, color=ch_color)
+        self.ledbar.value(True)
         
         # Card
-        btn=Button(
+        btn=Pad(
             wrt_md_red,
             row,
             col,
-            height=150,
-            width=86,
-            shape=CLIPPED_RECT,
-            bdcolor=False,
-            bgcolor=bgcolor,
-            fgcolor=fgcolor,
+            height=height,
+            width=width,
             callback=self._on_channel
-        )
-        
-        # Probe Icon
-        lbl_head_meas=Label(
-            wrt_icon,
-            row+10,
-            col+16,
-            "C", # Icon thermometer
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
-        )
-
-        # Unit
-        lbl_meas_unit=Label(
-            wrt_md_red,
-            row+14,
-            col+44,
-            "°C",
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
         )
 
         # Meas Temp
         lbl_meas=Label(
             wrt_lg_temp,
-            lbl_head_meas.mrow + 2,
-            col + 10,
+            row_meas,
+            col + 4,
             70,
-            fgcolor=fgcolor,
             justify=Label.LEFT,
-            bgcolor=bgcolor,
         )
         self.temp_label = lbl_meas
 
-        # Target Icon
-        lbl_head_trgt=Label(
-            wrt_icon,
-            row+80,
-            col + 16,
-            "A",
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
+        # Unit
+        lbl_meas_unit=Label(
+            wrt_md_red,
+            row_meas,
+            lbl_meas.mcol,
+            "°C",
         )
 
-        # Target unit
-        lbl_unit_trgt=Label(
+        # Target arrow
+        lbl_arrow=Label(
             wrt_md_red,
-            row+80,
-            col + 44,
-            "°C",
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
+            row_target,
+            col + 10,
+            "->  ",
         )
-        self.target_unit_label = lbl_unit_trgt
 
         # Target temp
         lbl_trgt=Label(
             wrt_md_red,
-            row + 110,
-            col + 30,
-            "----.--",
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
+            row_target,
+            lbl_arrow.mcol,
+            "----",
         )
         self.target_label = lbl_trgt
+
+        # Target unit
+        lbl_unit_trgt=Label(
+            wrt_md_red,
+            row_target,
+            lbl_trgt.mcol,
+            "°C",
+        )
+        self.target_unit_label = lbl_unit_trgt
 
     def _on_channel(self, btn, *args):
         # Guard: active but NOT confirmed → only confirm
@@ -111,33 +98,31 @@ class BBQchUI:
     def bbq_card(self, row, col, fgcolor, bgcolor):
         
         # Card
-        btn=Button(
+        btn=Pad(
             wrt_md_red,
-            row, col,
+            row,
+            col,
             height=60,
             width=265,
-            shape=CLIPPED_RECT,
-            bdcolor=False,
-            bgcolor=bgcolor,
-            fgcolor=fgcolor,
         )
 
-        # BBQ Icon
-        lbl_icon_bbq=Label(
-            wrt_icon,
-            row + 4,
+        # Title
+        Label(
+            wrt_md_red,
+            row+10,
             col + 6,
-            "E",
+            "BBQ",
             fgcolor=fgcolor,
+            justify=Label.LEFT,
             bgcolor=bgcolor,
         )
 
         # BBQ Measurement
         lbl_bbq_meas=Label(
-            wrt_lg_temp,
-            row+20,
-            col + 100,
-            70,
+            wrt_md_red,
+            row+10,
+            col + 120,
+            60,
             fgcolor=fgcolor,
             justify=Label.LEFT,
             bgcolor=bgcolor,
@@ -147,8 +132,8 @@ class BBQchUI:
         # BBQ unit
         lbl_meas_unit=Label(
             wrt_md_red,
-            row+20,
-            col+190,
+            row+10,
+            lbl_bbq_meas.mcol,
             "°C",
             fgcolor=fgcolor,
             bgcolor=bgcolor,
@@ -157,25 +142,25 @@ class BBQchUI:
 
 class TargetTempWindow(Window):
     def __init__(self, col, row, w, h, ch, presenter):
-        bgcolor = [MAGENTA, GREEN, BLUE]
-        super().__init__(col, row, w, h, bgcolor=bgcolor[ch])
+        #bgcolor = [MAGENTA, GREEN, BLUE]
+        super().__init__(col, row, w, h, bgcolor=BG)
 
         def on_value(value):
             if value is not None:
                 presenter.set_target_temp(ch, value)
-            print("Target temperature:", value)
+            info(f"Target temperature: {value}")
             Screen.back()
 
         self.numpad = NumPad(
             wrt_md_red,
-            wrt_lg_temp,
+            wrt_md_red,
             row=10,
             col=10,
             width=w - 20,
             initial=str(int(presenter.get_target(ch))),
             unit=" °C",
             on_ok=on_value,
-            bgcolor=bgcolor[ch]
+            bgcolor=BG
         )
 
 class NumPad:
@@ -193,7 +178,7 @@ class NumPad:
         initial="0",
         unit="",
         on_ok=None,
-        bgcolor=BLACK
+        bgcolor=BG
     ):
         self.writer_pad = writer_pad
         self.on_ok = on_ok
@@ -206,8 +191,8 @@ class NumPad:
             writer_lbl,
             row+60,
             col+24,
-            60,
-            bgcolor=bgcolor
+            40,
+            bgcolor=BG
         )
         self.label.value(self.buf)
         # Unit
@@ -216,7 +201,7 @@ class NumPad:
             row+60,
             self.label.mcol+ 4,
             self.unit,
-            bgcolor=bgcolor
+            bgcolor=BG
         )
 
         # Layout
@@ -247,7 +232,7 @@ class NumPad:
                 height=bh,
                 shape=CLIPPED_RECT,
                 callback=self._make_key_cb(key),
-                bgcolor=bgcolor
+                bgcolor=BG
             )
             self.buttons.append(btn)
 
@@ -261,7 +246,7 @@ class NumPad:
             height=bh,
             shape=CLIPPED_RECT,
             callback=self._ok,
-            bgcolor=bgcolor
+            bgcolor=BG
         )
 
     def _make_key_cb(self, key):

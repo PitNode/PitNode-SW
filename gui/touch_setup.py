@@ -5,7 +5,8 @@
 
 from machine import Pin, SPI
 import gc
-from drivers.ili93xx.ili9341 import ILI9341 as SSD
+#from drivers.ili93xx.ili9341 import ILI9341 as SSD
+from drivers.ili93xx.ili9341_8bit import ILI9341 as SSD
 import pitnode.driver.hw_config as hw_cfg
 
 #freq(250_000_000)  # RP2 overclock
@@ -32,7 +33,7 @@ spi1 = SPI(1,
 
 gc.collect()  # Precaution before instantiating framebuf
 
-ssd = SSD(spi0, pcs, pdc, prst, height=hw_cfg.LCD_HEIGHT, width=hw_cfg.LCD_WIDTH, usd=False)
+ssd = SSD(spi0, pcs, pdc, prst, height=hw_cfg.LCD_HEIGHT, width=hw_cfg.LCD_WIDTH, usd=False, bgr=False)
 from gui.core.tgui import Display, quiet
 quiet()  # Comment this out for periodic free RAM messages
 
