@@ -76,7 +76,7 @@ class App:
         await self.gui_ready.wait()
         await asyncio.sleep(0)
         await asyncio.sleep(0)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.5)
         info("[APP] GUI ready → starting WiFi")
         connected = await self.wifi.wifi_init()
         self._update_status()

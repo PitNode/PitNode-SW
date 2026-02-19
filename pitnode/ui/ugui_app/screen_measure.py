@@ -70,6 +70,7 @@ class MeasureScreen(Screen):
         self.config_button = None
         self.num_channels_pp = Pos.ch_per_page
         self._create_layout()
+        
 
     def after_open(self):
         gc.collect()
@@ -81,6 +82,7 @@ class MeasureScreen(Screen):
         
         # Then draw layout overlaying
         self.show(True)
+        self.presenter.screen_attached()
 
     #--- LCD Layout ---#
     def _create_layout(self):

@@ -108,8 +108,8 @@ def test_trigger_measurement_loop(valid_controller):
 async def test_controller_lifecycle(valid_controller):
     Ctrl = valid_controller
     Ctrl.hw = MockHw()
-    await Ctrl.start_pitnode()
-    await Ctrl.stop_pitnode()
+    await Ctrl.start_pitnode_ctrl()
+    await Ctrl.stop_pitnode_ctrl()
     assert Ctrl._running is False
     assert Ctrl._tasks == []
 
@@ -118,6 +118,6 @@ async def test_controller_lifecycle(valid_controller):
 async def test_start_is_idempotent(valid_controller):
     Ctrl = valid_controller
     Ctrl.hw = MockHw()
-    await Ctrl.start_pitnode()
-    await Ctrl.start_pitnode()
+    await Ctrl.start_pitnode_ctrl()
+    await Ctrl.start_pitnode_ctrl()
     assert len(Ctrl._tasks) == 2

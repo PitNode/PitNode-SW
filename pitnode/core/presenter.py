@@ -60,7 +60,7 @@ class PitNodePresenter:
 
     def attach_screen(self, screen):
         self.screen = screen
-        self.screen_attached()
+        #self.screen_attached()
 
     def detach_screen(self):
         self.screen = None

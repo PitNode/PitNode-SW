@@ -99,13 +99,14 @@ function rebuildUI() {
       <header>Channel ${ch}</header>
       <p>IST: <strong>${t.toFixed(1)} °C</strong></p>
 
-      <label>
+      <p>
         SOLL: <output id="val${ch}">${tt}</output> °C
         <input type="range" min="0" max="300" value="${tt}"
           onpointerdown="startInteraction()"
           onpointerup="endInteraction()"
           oninput="sliderChange(${ch}, this.value)">
-      </label>
+      </p>
+      <button id=confirm_set_${ch}>Set</button>
     `;
     root.appendChild(article);
   }
