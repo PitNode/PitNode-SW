@@ -94,6 +94,17 @@ async def http_handler(reader, writer, presenter):
         await writer.wait_closed()
         return
     
+    # ---- static files (app.js) ----
+    if path.endswith("/app.js"):
+        await send_file(
+            writer,
+            "/pitnode/web" + path,
+            "application/javascript"
+        )
+        writer.close()
+        await writer.wait_closed()
+        return
+    
     # ---- HTTP requests ----
     if path == "/":
         await send_file(

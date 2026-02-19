@@ -6,6 +6,7 @@
 
   <!-- Pico.css -->
   <link rel="stylesheet" href="/static/pico.min.css">
+  <link rel="stylesheet" href="/static/user.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -28,9 +29,21 @@
 <!-- ================= MAIN ================= -->
 <main class="container">
 
-  <section id="channels">
-    <!-- Dynamisch durch JS -->
-  </section>
+  <section id="channels"></section>
+
+  <template id="channel-template">
+    <article>
+      <header class="ch-title"></header>
+
+      <p>IST: <strong class="ch-temp"></strong></p>
+
+      <p>
+        SOLL: <output class="ch-target"></output> °C
+        <input type="range" min="0" max="150" class="ch-slider">
+        <button class="alarm-btn" disabled>Confirm alarm</button>
+      </p>
+    </article>
+  </template>
 
 </main>
 
@@ -44,100 +57,7 @@
   </small>
 </footer>
 
-<script>
-let userInteracting = false;
-let temps = [];
-let targets = [];
-let alarms = [];
-let debounceTimer = null;
-const DEBOUNCE_MS = 100;   // 150–300 ms sind ideal
-
-const ws = new WebSocket("ws://" + location.host + "/ws");
-
-ws.onopen = () => console.log("WS open");
-ws.onmessage = e => handleMessage(e.data);
-
-function handleMessage(msg) {
-  const data = JSON.parse(msg);
-
-  switch (data.type) {
-    case "temp":
-      temps[data.ch] = data.value;
-      break;
-
-    case "target":
-      targets[data.ch] = data.value;
-      break;
-
-    case "alarm":
-      alarms[data.ch] = data.value;
-      break;
-
-    default:
-      return;
-  }
-
-  rebuildUI();
-}
-
-
-function rebuildUI() {
-  if (userInteracting) return;
-
-  const count = Math.max(temps.length, targets.length);
-  const root = document.getElementById("channels");
-  root.innerHTML = "";
-
-  for (let ch = 0; ch < count; ch++) {
-    const t = temps[ch];
-    const tt = targets[ch] ?? 0;
-
-    if (typeof t !== "number") continue;
-
-    const article = document.createElement("article");
-    article.innerHTML = `
-      <header>Channel ${ch}</header>
-      <p>IST: <strong>${t.toFixed(1)} °C</strong></p>
-
-      <p>
-        SOLL: <output id="val${ch}">${tt}</output> °C
-        <input type="range" min="0" max="300" value="${tt}"
-          onpointerdown="startInteraction()"
-          onpointerup="endInteraction()"
-          oninput="sliderChange(${ch}, this.value)">
-      </p>
-      <button id=confirm_set_${ch}>Set</button>
-    `;
-    root.appendChild(article);
-  }
-}
-
-function sliderChange(ch, value) {
-  targets[ch] = Number(value);
-  document.getElementById("val" + ch).innerText = value;
-
-  // ---- Debounce ----
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-
-  debounceTimer = setTimeout(() => {
-    ws.send(JSON.stringify({
-      cmd: "set_targets",
-      values: targets
-    }));
-  }, DEBOUNCE_MS);
-}
-
-function startInteraction() {
-  userInteracting = true;
-}
-
-function endInteraction() {
-  userInteracting = false;
-}
-
-</script>
+<script src="/app.js"></script>
 
 </body>
 </html>

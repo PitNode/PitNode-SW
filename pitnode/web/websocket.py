@@ -82,6 +82,8 @@ async def websocket_session(reader, writer, presenter):
                 continue
             if data.get("cmd") == "set_targets":
                 presenter.set_target_temps(data["values"])
+            if data.get("cmd") == "set_target":
+                presenter.set_target_temp(data["ch"], data["value"])
     finally:
         push_task.cancel()
         try:
