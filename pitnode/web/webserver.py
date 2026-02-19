@@ -82,6 +82,18 @@ async def http_handler(reader, writer, presenter):
         writer.close()
         await writer.wait_closed()
         return
+    
+    # ---- static files (png) ----
+    if path.endswith(".png"):
+        await send_file(
+            writer,
+            "/pitnode/web" + path,
+            "image/png"
+        )
+        writer.close()
+        await writer.wait_closed()
+        return
+    
     # ---- HTTP requests ----
     if path == "/":
         await send_file(

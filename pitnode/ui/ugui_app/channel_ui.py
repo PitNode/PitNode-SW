@@ -1,6 +1,10 @@
+
+import gc
+
 from gui.core.tgui import Screen, Window
 from gui.widgets import Label, Button, CloseButton, Pad
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
 from gui.core.colors import *
 from pitnode.ui.ugui_app.colors import *
 from pitnode.log.log import error, info
@@ -15,13 +19,17 @@ class ChannelUI:
         self.presenter = presenter
 
     def ch_card(self, row, col, height, width, ch_color):
-        ledbar_row = row+10
-        ledbar_col = col+4
-        row_meas = row + height//2 - wrt_lg_temp.height//2
-        row_target = row_meas + wrt_lg_temp.height + 40
+        ledbar_start_row = row+10
+        card_col_middle = col + width // 2
+        ledbar_start_col = card_col_middle - (Pos.ledbar_width //2)
 
         # CH marker
-        self.ledbar = LEDBAR(wrt_md_red, ledbar_row, ledbar_col, height=6, width=74, color=ch_color)
+        self.ledbar = LEDBAR(wrt_md_red,
+                             ledbar_start_row,
+                             ledbar_start_col,
+                             height=Pos.ledbar_height,
+                             width=Pos.ledbar_width,
+                             color=ch_color)
         self.ledbar.value(True)
         
         # Card
@@ -34,49 +42,50 @@ class ChannelUI:
             callback=self._on_channel
         )
 
-        # Meas Temp
-        lbl_meas=Label(
-            wrt_lg_temp,
-            row_meas,
-            col + 4,
-            70,
-            justify=Label.LEFT,
-        )
-        self.temp_label = lbl_meas
-
+        unit_label_width = 40
+        unit_label_start_row = self.ledbar.mrow + 14
+        unit_label_start_col = card_col_middle - unit_label_width//2
         # Unit
         lbl_meas_unit=Label(
             wrt_md_red,
-            row_meas,
-            lbl_meas.mcol,
-            "°C",
+            unit_label_start_row,
+            unit_label_start_col,
+            unit_label_width,
+            justify=Label.CENTRE
         )
+        lbl_meas_unit.value("°C")
 
+        temp_label_width = 70
+        temp_label_start_row = lbl_meas_unit.mrow + 10
+        temp_label_start_col = card_col_middle - temp_label_width // 2        
+        # Meas Temp
+        lbl_meas=Label(
+            wrt_lg_temp,
+            temp_label_start_row,
+            temp_label_start_col,
+            temp_label_width,
+            justify=Label.CENTRE,
+        )
+        self.temp_label = lbl_meas
+
+        target_label_start_row = self.temp_label.mrow + 10
+        target_label_start_col = card_col_middle - 30 // 2    
         # Target arrow
         lbl_arrow=Label(
             wrt_md_red,
-            row_target,
-            col + 10,
+            target_label_start_row,
+            target_label_start_col,
             "->  ",
         )
 
         # Target temp
         lbl_trgt=Label(
             wrt_md_red,
-            row_target,
+            target_label_start_row,
             lbl_arrow.mcol,
             "----",
         )
         self.target_label = lbl_trgt
-
-        # Target unit
-        lbl_unit_trgt=Label(
-            wrt_md_red,
-            row_target,
-            lbl_trgt.mcol,
-            "°C",
-        )
-        self.target_unit_label = lbl_unit_trgt
 
     def _on_channel(self, btn, *args):
         # Guard: active but NOT confirmed → only confirm
@@ -95,48 +104,32 @@ class BBQchUI:
     def __init__(self) -> None:
         self.temp_label = None
 
-    def bbq_card(self, row, col, fgcolor, bgcolor):
-        
-        # Card
-        btn=Pad(
+    def bbq_card(self, row, col):
+        # Title
+        lbl_bbq = Label(
             wrt_md_red,
             row,
             col,
-            height=60,
-            width=265,
-        )
-
-        # Title
-        Label(
-            wrt_md_red,
-            row+10,
-            col + 6,
-            "BBQ",
-            fgcolor=fgcolor,
+            "BBQ: ",
             justify=Label.LEFT,
-            bgcolor=bgcolor,
         )
 
         # BBQ Measurement
         lbl_bbq_meas=Label(
             wrt_md_red,
-            row+10,
-            col + 120,
+            row,
+            lbl_bbq.mcol,
             60,
-            fgcolor=fgcolor,
             justify=Label.LEFT,
-            bgcolor=bgcolor,
         )
         self.temp_label = lbl_bbq_meas
 
         # BBQ unit
         lbl_meas_unit=Label(
             wrt_md_red,
-            row+10,
+            row,
             lbl_bbq_meas.mcol,
             "°C",
-            fgcolor=fgcolor,
-            bgcolor=bgcolor,
         )
         return self
 
@@ -150,7 +143,9 @@ class TargetTempWindow(Window):
                 presenter.set_target_temp(ch, value)
             info(f"Target temperature: {value}")
             Screen.back()
-
+        def on_hide():
+            gc.collect()
+        
         self.numpad = NumPad(
             wrt_md_red,
             wrt_md_red,
@@ -294,3 +289,15 @@ class NumPad:
 
         if self.on_ok:
             self.on_ok(value)
+
+# numpad = NumPad(
+#             wrt_md_red,
+#             wrt_md_red,
+#             row=10,
+#             col=10,
+#             width=w - 20,
+#             initial=str(int(10)),
+#             unit=" °C",
+#             on_ok=on_value,
+#             bgcolor=BG
+#         )

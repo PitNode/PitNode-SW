@@ -10,14 +10,15 @@ from math import sin
 from micropython import const
 
 import touch_setup as touch_setup
-from gui.core.tgui import Screen, ssd, display
-from gui.core.writer import CWriter
-from gui.widgets import Label, CloseButton
-from gui.core.colors import *
+from gui.core.tgui import Screen, ssd
+#from gui.core.writer import CWriter
+#from gui.widgets import Label, CloseButton
+#from gui.core.colors import *
 
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
 from pitnode.ui.ugui_app.channel_ui import ChannelUI, BBQchUI
-from pitnode.ui.ugui_app.side_menu_ui import SideMenu
+from pitnode.ui.ugui_app.menu_ui import Menu
 import config as cfg
 from pitnode.core.probe import ProbeState
 from pitnode.log.log import error, info
@@ -25,19 +26,19 @@ from pitnode.ui.ugui_app.colors import *
 
 
 # GUI definitions
-HEADER_H = const(24)  # Header height in px
-CH_PPAGE = const(3)  # Number of channels to display per page
-PAGES = const(1)  # Number of pages
-MARGIN_LR = const(6)  # Margin to left and right side in px
-MARGIN_TB = const(6)
-COL1_W = const(70)  # Column 1 width in px
-COL2_W = const(130)  # Column 1 width in px
-CH_ROW_START = HEADER_H + 2
-CH_COL_START = MARGIN_LR
-BG_COLOR = BG  # Background color
-LINE_COLOR = GREY  # Color of GUI lines
-CH_COLORS = [YELLOW, GREEN, MAGENTA]
-CH_SPACING = int((ssd.height - (HEADER_H + 2)) / CH_PPAGE)
+#HEADER_H = const(24)  # Header height in px
+#CH_PPAGE = const(3)  # Number of channels to display per page
+#PAGES = const(1)  # Number of pages
+#MARGIN_LR = const(6)  # Margin to left and right side in px
+#MARGIN_TB = const(6)
+#COL1_W = const(70)  # Column 1 width in px
+#COL2_W = const(130)  # Column 1 width in px
+#CH_ROW_START = HEADER_H + 2
+#CH_COL_START = MARGIN_LR
+#BG_COLOR = BG  # Background color
+#LINE_COLOR = GREY  # Color of GUI lines
+#CH_COLORS = [YELLOW, GREEN, MAGENTA]
+#CH_SPACING = int((ssd.height - (HEADER_H + 2)) / CH_PPAGE)
 
 async def start_gui(presenter):
     MeasureScreen.set_app(presenter)
@@ -60,7 +61,6 @@ class MeasureScreen(Screen):
         self._pulse_tasks = [None] * self.presenter.get_num_probe_channels()
         self.ch_color = [CH1_COL, CH2_COL, CH3_COL]
         self.ch_rgb = [CH_1_RGB, CH_2_RGB, CH_3_RGB]
-        self.num_channels_pp = CH_PPAGE
         self.temp_labels = []
         self.target_labels = []
         self.tc_temp_label = None
@@ -68,23 +68,19 @@ class MeasureScreen(Screen):
         self.inc_buttons = []
         self.dec_buttons = []
         self.config_button = None
-        self.width = ssd.width
+        self.num_channels_pp = Pos.ch_per_page
         self._create_layout()
-        # self._create_buttons()
-        # self._bind_events()
 
     def after_open(self):
-        # Divider for header
-        ssd.hline(10, 40, 310, DIVIDER_1)
-        ssd.hline(10, 41, 310, DIVIDER_2)
-
-        # Divider for col.
-        ssd.vline(106, 50, 160, DIVIDER_1)
-        ssd.vline(107, 50, 160, DIVIDER_2)
-
-        # Divider for col.
-        ssd.vline(212, 50, 160, DIVIDER_1)
-        ssd.vline(213, 50, 160, DIVIDER_2)
+        gc.collect()
+        # Background image
+        fn = "bg_img.bin"  # Image created by`img_cvt.py`
+        with open(fn, "rb") as f:
+            _ = f.read(4)  # Read and discard rows and cols
+            f.readinto(ssd.mvb)  # Read the image into the frame buffer
+        
+        # Then draw layout overlaying
+        self.show(True)
 
     #--- LCD Layout ---#
     def _create_layout(self):
@@ -95,25 +91,26 @@ class MeasureScreen(Screen):
         self._side_menu()
 
     def _side_menu(self):
-        sm = SideMenu(self.presenter, self)
+        sm = Menu(self.presenter, self)
 
     def _create_channels(self):
         """
         Per-channel rows: temperature, target, +/- buttons
         """
-        num_ch = self.presenter.get_num_probe_channels() # type:ignore
-        col_width = ssd.width // num_ch 
-        row_meas_card = 40
-        
-        for ch in range(num_ch): # type:ignore
-            ch_ui = ChannelUI(ch, self.presenter)
-            ch_ui.ch_card(row_meas_card, 0+(ch*col_width), 150, 86, self.ch_color[ch])
-            self.temp_labels.append(ch_ui.temp_label)
-            self.target_labels.append(ch_ui.target_label)
-            self.ledbars.append(ch_ui.ledbar)
+        ch_ui_list = [None] * Pos.ch_per_page
+        for ch in range(Pos.ch_per_page): # type:ignore
+            ch_ui_list[ch] = ChannelUI(ch, self.presenter)  # type:ignore
+            ch_ui_list[ch].ch_card(Pos.ch_start_row, # type:ignore
+                                    0+(ch*Pos.ch_width),
+                                    Pos.ch_height,
+                                    Pos.ch_width,
+                                    self.ch_color[ch])
+            self.temp_labels.append(ch_ui_list[ch].temp_label) # type:ignore
+            self.target_labels.append(ch_ui_list[ch].target_label) # type:ignore
+            self.ledbars.append(ch_ui_list[ch].ledbar) # type:ignore
         
         bbq_ui = BBQchUI()
-        bbq_ui.bbq_card(0, 0, ACCENT_GRILL, DEF_BG)
+        bbq_ui.bbq_card(4+Pos.margin, 4+Pos.margin)
         self.tc_temp_label = bbq_ui.temp_label
 
     def _create_buttons(self):
