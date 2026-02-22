@@ -1,4 +1,8 @@
-# pitnode/ui/ugui/port.py
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
 import gc
 
 import gui.touch_setup as touch_setup

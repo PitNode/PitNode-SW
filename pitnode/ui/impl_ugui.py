@@ -1,10 +1,14 @@
-# pitnode/ui/_impl.py   (uGUI Build)
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
 import gc
 
 import gui.touch_setup as touch_setup
 import pitnode.ui.ugui_app.screen_measure as screen_measure
-import pitnode.ui.ugui_app.screen_wifi
-import pitnode.ui.ugui_app.screen_config
+#import pitnode.ui.ugui_app.screen_wifi
+#import pitnode.ui.ugui_app.screen_config
 
 
 async def start_gui(app):

@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
 import asyncio
 
 from pitnode.core.controller import PitNodeCtrl as Ctrl
@@ -35,5 +40,5 @@ async def main():
     print("Alarm on")
     await asyncio.sleep(3)
 
-Ctrl.hw = Pico()
+Ctrl.hw = Pico() # type:ignore
 asyncio.run(main())

@@ -84,6 +84,8 @@ async def websocket_session(reader, writer, presenter):
                 presenter.set_target_temps(data["values"])
             if data.get("cmd") == "set_target":
                 presenter.set_target_temp(data["ch"], data["value"])
+            if data.get("cmd") == "confirm_alarm":
+                presenter.confirm_alarm(data["ch"])
     finally:
         push_task.cancel()
         try:
@@ -100,12 +102,14 @@ async def ws_push_loop(ws, presenter):
             temps = presenter.get_temps()
             targets = presenter.get_targets()
             alarms = presenter.get_alarms()
+            bbq_temp = presenter.get_tc_temp()
             for ch, t in enumerate(temps):
                 await ws.update_temp(ch, t)
             for ch, tt in enumerate(targets):
                 await ws.update_target(ch, tt)
             for ch, a in enumerate(alarms):
                 await ws.set_alarm(ch, a)
+            await ws.update_bbq(bbq_temp)
             await asyncio.sleep(1)
     except (asyncio.CancelledError, OSError):
         pass
@@ -164,4 +168,10 @@ class WebSocketClient:
             "type": "alarm",
             "ch": ch,
             "value": active
+        })
+
+    async def update_bbq(self, temp):
+        await ws_send_json(self.writer, {
+            "type": "bbq_temp",
+            "value": temp
         })

@@ -23,6 +23,10 @@ class WiFiWrapper:
     @property
     def networks(self):
         return self._networks
+    
+    @property
+    def wlan(self):
+        return self._wlan
 
     async def connect_sta(self, ssid, password, timeout=20):
         if not self._wlan:
@@ -55,7 +59,7 @@ class WiFiWrapper:
             info("[WIFI] No password or SSID for WiFi set. Skipping.")
             return False
         
-        info("Verbinde WLAN: {ssid}")
+        info(f"Verbinde WLAN: {ssid}")
         return await self.connect_sta(ssid, pw)
 
     async def stop(self):

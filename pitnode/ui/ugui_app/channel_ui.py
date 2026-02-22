@@ -1,11 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
 
 import gc
 
 from gui.core.tgui import Screen, Window
-from gui.widgets import Label, Button, CloseButton, Pad
+from gui.widgets import Label, Button, Pad
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
-from gui.core.colors import *
+#from gui.core.colors import *
 from pitnode.ui.ugui_app.colors import *
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.widgets.led_bar import LEDBAR
@@ -69,23 +73,24 @@ class ChannelUI:
         self.temp_label = lbl_meas
 
         target_label_start_row = self.temp_label.mrow + 10
-        target_label_start_col = card_col_middle - 30 // 2    
+        target_label_start_col = card_col_middle - 80 // 2    
         # Target arrow
         lbl_arrow=Label(
-            wrt_md_red,
+            wrt_icon,
             target_label_start_row,
             target_label_start_col,
-            "->  ",
+            "A",
         )
 
         # Target temp
         lbl_trgt=Label(
             wrt_md_red,
             target_label_start_row,
-            lbl_arrow.mcol,
-            "----",
+            lbl_arrow.mcol+4,
+            50,
         )
         self.target_label = lbl_trgt
+        self.target_label.value("--")
 
     def _on_channel(self, btn, *args):
         # Guard: active but NOT confirmed → only confirm
@@ -135,27 +140,22 @@ class BBQchUI:
 
 class TargetTempWindow(Window):
     def __init__(self, col, row, w, h, ch, presenter):
-        #bgcolor = [MAGENTA, GREEN, BLUE]
-        super().__init__(col, row, w, h, bgcolor=BG)
+        super().__init__(col, row, w, h, bgcolor=DEF_BG)
 
         def on_value(value):
             if value is not None:
                 presenter.set_target_temp(ch, value)
             info(f"Target temperature: {value}")
             Screen.back()
-        def on_hide():
-            gc.collect()
         
         self.numpad = NumPad(
             wrt_md_red,
             wrt_md_red,
             row=10,
             col=10,
-            width=w - 20,
             initial=str(int(presenter.get_target(ch))),
             unit=" °C",
             on_ok=on_value,
-            bgcolor=BG
         )
 
 class NumPad:
@@ -168,12 +168,10 @@ class NumPad:
         writer_lbl,
         row,
         col,
-        width,
         *,
         initial="0",
         unit="",
         on_ok=None,
-        bgcolor=BG
     ):
         self.writer_pad = writer_pad
         self.on_ok = on_ok
@@ -185,9 +183,8 @@ class NumPad:
         self.label = Label(
             writer_lbl,
             row+60,
-            col+24,
-            40,
-            bgcolor=BG
+            col+10,
+            60,
         )
         self.label.value(self.buf)
         # Unit
@@ -196,7 +193,6 @@ class NumPad:
             row+60,
             self.label.mcol+ 4,
             self.unit,
-            bgcolor=BG
         )
 
         # Layout
@@ -227,7 +223,6 @@ class NumPad:
                 height=bh,
                 shape=CLIPPED_RECT,
                 callback=self._make_key_cb(key),
-                bgcolor=BG
             )
             self.buttons.append(btn)
 
@@ -241,7 +236,6 @@ class NumPad:
             height=bh,
             shape=CLIPPED_RECT,
             callback=self._ok,
-            bgcolor=BG
         )
 
     def _make_key_cb(self, key):
@@ -289,15 +283,3 @@ class NumPad:
 
         if self.on_ok:
             self.on_ok(value)
-
-# numpad = NumPad(
-#             wrt_md_red,
-#             wrt_md_red,
-#             row=10,
-#             col=10,
-#             width=w - 20,
-#             initial=str(int(10)),
-#             unit=" °C",
-#             on_ok=on_value,
-#             bgcolor=BG
-#         )

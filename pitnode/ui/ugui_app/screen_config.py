@@ -8,13 +8,14 @@ import asyncio
 
 from gui.core.tgui import Screen
 from gui.widgets import Label, Button, CloseButton
-from gui.core.colors import *
+#from gui.core.colors import *
 
 from pitnode.ui.ugui_app.ugui_init import wrt_keyboard, wrt_md_red
 from pitnode.storage.secrets import save_password, save_ssid
 import config as cfg
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.screen_wifi import WLANsetupScreen
+from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
 
 class ConfigScreen(Screen):
     presenter = None
@@ -26,28 +27,36 @@ class ConfigScreen(Screen):
     def __init__(self):
         super().__init__()
         assert self.presenter is not None # type: ignore
-        gap_entries = 10
-        row = 10
-        col = 10
+        gap_entries = 14
+        row = Pos.margin
+        col = Pos.margin
         config_entries = ["WLAN:"]
-
-        Label(
+                
+        lbl_config = Label(
             wrt_md_red,
             row,
             col,
             "Configuration",
         )
-        row = row+20
+
+        lbl_ip = Label(
+            wrt_keyboard,
+            lbl_config.mrow+gap_entries,
+            col,
+            Pos.lcd_width-2*Pos.margin
+        )
+        lbl_ip.value(f"IP: {self.presenter.get_ip()}")
+
         for idx, entry in enumerate(config_entries):
             entry_label = Label(
                 wrt_md_red,
-                row+20+idx*gap_entries,
+                lbl_ip.mrow+idx*gap_entries,
                 col,
                 entry,
             )
             Button(
                 wrt_md_red,
-                row+16+idx*gap_entries,
+                lbl_ip.mrow-4+idx*gap_entries,
                 220,
                 text="Change",
                 callback=self._open_wlan_config,

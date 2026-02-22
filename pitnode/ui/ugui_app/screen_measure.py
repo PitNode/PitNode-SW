@@ -25,21 +25,6 @@ from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.colors import *
 
 
-# GUI definitions
-#HEADER_H = const(24)  # Header height in px
-#CH_PPAGE = const(3)  # Number of channels to display per page
-#PAGES = const(1)  # Number of pages
-#MARGIN_LR = const(6)  # Margin to left and right side in px
-#MARGIN_TB = const(6)
-#COL1_W = const(70)  # Column 1 width in px
-#COL2_W = const(130)  # Column 1 width in px
-#CH_ROW_START = HEADER_H + 2
-#CH_COL_START = MARGIN_LR
-#BG_COLOR = BG  # Background color
-#LINE_COLOR = GREY  # Color of GUI lines
-#CH_COLORS = [YELLOW, GREEN, MAGENTA]
-#CH_SPACING = int((ssd.height - (HEADER_H + 2)) / CH_PPAGE)
-
 async def start_gui(presenter):
     MeasureScreen.set_app(presenter)
     Screen.change(MeasureScreen)
@@ -75,14 +60,14 @@ class MeasureScreen(Screen):
     def after_open(self):
         gc.collect()
         # Background image
-        fn = "bg_img.bin"  # Image created by`img_cvt.py`
+        fn = "bg_img.bin"
         with open(fn, "rb") as f:
-            _ = f.read(4)  # Read and discard rows and cols
-            f.readinto(ssd.mvb)  # Read the image into the frame buffer
+            _ = f.read(4)
+            f.readinto(ssd.mvb)
         
         # Then draw layout overlaying
         self.show(True)
-        self.presenter.screen_attached()
+        self.presenter.screen_attached() # type:ignore
 
     #--- LCD Layout ---#
     def _create_layout(self):

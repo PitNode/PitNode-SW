@@ -1,7 +1,13 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (c) 2026 Philipp Geisseler / PitNode project
+// https://github.com/pitnode/pitnode
+// https://www.pitnode.de
+
 let userInteracting = false;
 let temps = [];
 let targets = [];
 let alarms = [];
+let bbq_temp = null;
 const channels = {};  // { ch: { tempEl, targetEl, sliderEl } }
 
 const ws = new WebSocket("ws://" + location.host + "/ws");
@@ -45,9 +51,14 @@ function createChannel(ch) {
   });
 
   alarmBtn.addEventListener("click", () => {
-  // Presenter-Methode hier eintragen
-    presenter.confirm_alarm(ch);
+  if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+      cmd: "confirm_alarm",
+      ch: ch
+      }));
+  }
   });
+
 
   root.appendChild(clone);
 
@@ -94,6 +105,13 @@ function updateChannel(ch) {
   setAlarmActive(ch, alarmState);
 }
 
+function updateBBQ() {
+  const bbq_title   = document.querySelector(".bbq-title");
+  const bbq_temp_lbl = document.querySelector(".bbq-temp");
+
+  bbq_title.innerText = "BBQ"
+  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " °C";
+}
 
 function handleMessage(msg) {
   const data = JSON.parse(msg);
@@ -112,6 +130,11 @@ function handleMessage(msg) {
     case "alarm":
       alarms[data.ch] = data.value;
       updateChannel(data.ch);
+      break;
+
+    case "bbq_temp":
+      bbq_temp = data.value;
+      updateBBQ();
       break;
   }
 }

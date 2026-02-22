@@ -44,6 +44,10 @@ class PitNodePresenter:
 
     def get_wifi_networks(self):
         return self._wifi.networks
+    
+    def get_ip(self):
+        ip = self._wifi.wlan.ifconfig()[0]
+        return ip
 
     def get_status(self):
         return self._status

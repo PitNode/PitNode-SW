@@ -1,11 +1,14 @@
 # PitNode
 
-PitNode is an open-source DIY BBQ thermometer based on the Raspberry Pi Pico 2 W.
+![PitNode](/assets/images/PitNode_Logo_Master_black_250_x_100.png)
+
+PitNode is an open-source DIY BBQ thermometer. It is based on the RPi Pico 2W (2350) microcontroller
+but can be easily adapted for other platforms.
 
 It is intended for makers and technically experienced users who want to build
 their own temperature monitoring system for BBQ and smoking applications.
 
-There is also a separate hardware repository available for the PitNode Pico Extension Board.
+There is also a separate hardware repository available for the [PitNode Pico Touch Extension Board](https://github.com/PitNode/PitNode-pico-touch-eb).
 
 For more information and documentation see
 
@@ -13,49 +16,60 @@ https://www.pitnode.de/
 
 "PitNode" is the project name used for this open-source project.
 
-This project is not a finished consumer product, but a DIY project intended for makers and technically experienced users.
+> [!NOTE]
+> This project is not a finished consumer product, but a DIY project intended for makers and technically experienced users.
 
 ## Project Status
 
 Status: **Active development**
 
 - First hardware prototype is running
-- Core functionality (measurement, alarms, UI, WiFi) is implemented
+- Core functionality (measurement, alarms, Touch-UI, WiFi, Webserver, Websocket) is implemented
 - APIs and internal structure may still change
 - Not yet considered feature-complete or production-ready
 
 ## Features
-- Software ready to upload to a Raspberry Pi Pico 2W
+### Functional
 - Monitoring of core temperature on 3 channels
-- Additional channel for thermocouple probes type K for grill temperature monitoring
 - Compatible with many NTC based probes  
   (RTD probes possible in theory, not yet implemented)
-- Large 2,8" color LCD Touch display
-- Temperature readout on display
+- Additional channel for thermocouple probes type K for grill temperature monitoring
+- Temperature readout on a colored touch display
 - Target core temperatures can be set individually for each channel
-- Acoustic alarm function when target core temperature is reached
-- Wifi connection (obfuscated password)
-- Webserver for accessing via browser
+- Acoustic and optical alarm function when target core temperature is reached
+- Wifi connection (obfuscated password storage)
+- Webserver for accessing via browser with smartphone or other device with nice web UI
 - Live update via websocket
 - PCB layout available in the hardware repository
-- Case files for 3D print available in the hardware repository
+- Enclosure files for 3D print available in the hardware repository
+
+### Installation
+- Software ready to upload to a Raspberry Pi Pico 2W with included deployment script
 
 ## Getting Started
 
-This project targets MicroPython on the Raspberry Pi Pico 2 W.
+This project targets MicroPython on the Raspberry Pi Pico 2 W. It should be possible to port it to other microcontrollers. The documentation is assuming that you are using the [PitNode Pico Touch Extension Board](https://github.com/PitNode/PitNode-pico-touch-eb).
 
-Basic steps:
-1. Flash MicroPython to the Pico 2 W
-2. Upload the software using `mpremote`
-3. Configure probes in config.py
-4. Power on and BBQ
+**Basic steps:**  
+Prerequisites:
+* `mpremote`is installed
+* You have a compatible HW available.
+
+1. Flash MicroPython to the Pico 2 W. Detailed instructions can be found on [micropython page](https://micropython.org/download/RPI_PICO2_W/)
+1. Clone this repository into you workspace  
+`git clone https://github.com/PitNode/PitNode-SW.git`
+1. Configure your NTC probes in config.py
+1. Make sure you eventually deleted all files from the Pico.
+1. Upload the software using the `deploy.sh` script  
+The script will upload all needed data to your Pico by using mpremote and auto detect the HW. Make sure only one Pico is connected to avoid unintended uploads.
+1. Power on and BBQ
 
 Detailed instructions are available at:
 https://www.pitnode.de/
 
 ## License
 This project is licenced under different licenses.
-SW/FW is licenced under - AGPL-3.0-or-later
+SW is licenced under - AGPL-3.0-or-later
 HW design files are licensed under - CC BY-NC-SA 4.0
 
 See `LICENSE.md` for details.

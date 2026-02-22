@@ -1,7 +1,14 @@
+# Original file from microgui-touch led widget of Peter Hinch:
 # Released under the MIT License (MIT). See LICENSE.
 # Copyright (c) 2021 Peter Hinch
 
-# Base class from Peter Hinch modified to get led bar
+# Derived ledbar widget from led widget for PitNode Project
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
 
 from gui.core.tgui import Widget, display
 from gui.core.colors import *

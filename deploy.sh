@@ -1,4 +1,10 @@
 #!/bin/sh
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
 set -e
 
 PORT=${1:-auto}
@@ -31,6 +37,7 @@ echo "--- Copy root files ---"
 $MPREMOTE cp main.py :
 $MPREMOTE cp touch_setup.py :
 $MPREMOTE cp config.py :
+$MPREMOTE cp bg_img.bin :
 
 # ---------- pitnode ----------
 echo "--- Create pitnode directories ---"
