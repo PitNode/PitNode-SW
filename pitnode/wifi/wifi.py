@@ -3,41 +3,42 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import network
+#import network
 import gc
 import asyncio
 from config import ENABLE_WIFI
 from pitnode.storage.secrets import load_password, load_ssid
 from pitnode.log.log import error, info, warn
 
+
 class WiFiWrapper:
-    def __init__(self):
-        self._connected = False
-        self._wlan = None
+    def __init__(self, system_status, wlan):
+        self._system_status = system_status
+        #self._wlan = None
+        self._wlan = wlan
         self._networks = []
 
-    @property
-    def connected(self):
-        return self._connected
-    
     @property
     def networks(self):
         return self._networks
     
-    @property
-    def wlan(self):
-        return self._wlan
+    def rssi(self):
+        if self._system_status.wifi.connected:
+            return self._wlan.status('rssi') #type:ignore
+        else:
+            return None
 
     async def connect_sta(self, ssid, password, timeout=20):
-        if not self._wlan:
-            self._wlan = network.WLAN(network.STA_IF)
+        if not self._wlan.active():
             self._wlan.active(True)
+            self._system_status.wifi.active = True
         self._wlan.connect(ssid, password)
-        
+
         for _ in range(timeout):
             try:
                 if self._wlan.isconnected():
-                    self._connected = True
+                    self._system_status.wifi.connected = True
+                    self._system_status.wifi.ip = self._wlan.ifconfig()[0]
                     info(f"WLAN verbunden: {self._wlan.ifconfig()}")
                     return True
                 await asyncio.sleep(1)
@@ -46,7 +47,7 @@ class WiFiWrapper:
                 raise
 
         warn("WLAN Verbindung fehlgeschlagen")
-        self._connected = False
+        self._system_status.wifi.connected = False
         return False
 
     async def wifi_init(self):
@@ -58,28 +59,29 @@ class WiFiWrapper:
         if not pw or not ssid:
             info("[WIFI] No password or SSID for WiFi set. Skipping.")
             return False
-        
+
         info(f"Verbinde WLAN: {ssid}")
         return await self.connect_sta(ssid, pw)
 
     async def stop(self):
-        if self._wlan:
+        if self._wlan.active():
             if self._wlan.isconnected():
                 self._wlan.disconnect()
             self._wlan.active(False)
-            self._wlan = None
-        self._connected = False
+            self._system_status.wifi.active = False
+        self._system_status.wifi.connected = False
+        self._system_status.wifi.ip = None
 
     async def scan_networks(self):
-        if not self._wlan:
-            self._wlan = network.WLAN(network.STA_IF)
+        if not self._wlan.active():
             self._wlan.active(True)
+            self._system_status.wifi.active = True
             await asyncio.sleep(0.2)
 
         # Scan NICHT während Verbindung
         if self._wlan.isconnected():
             warn("[WIFI] Scan skipped: already connected")
-            return self._networks
+            return
 
         info("[WIFI] Scanning networks...")
 
@@ -101,7 +103,6 @@ class WiFiWrapper:
             self._networks = networks
             gc.collect()
             info(f"[WIFI] Found {len(networks)} networks")
-            return networks
 
         except asyncio.CancelledError:
             warn("[WIFI] Scan aborted")
@@ -109,10 +110,9 @@ class WiFiWrapper:
         except Exception as e:
             error(f"[WIFI] Scan failed: {e}")
             self._networks = []
-            return []
 
     async def disconnect(self):
-        if not self._wlan:
+        if not self._wlan.isconnected():
             return
 
         try:
@@ -126,7 +126,7 @@ class WiFiWrapper:
                         break
                     await asyncio.sleep(0.1)
 
-            self._connected = False
+            self._system_status.wifi.connected = False
 
         except asyncio.CancelledError:
             warn("[WIFI] Disconnect aborted")

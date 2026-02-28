@@ -20,74 +20,81 @@ def mem(tag):
     gc.collect()
     print(tag, gc.mem_free(), gc.mem_alloc())
 
-class SystemStatus:
-    __slots__ = ("wifi_connected",)
-
-    def __init__(self):
-        self.wifi_connected = False
-
 class App:
+    __slots__ = ("_status",
+                 "_controller",
+                 "_wifi",
+                 "_config",
+                 "_wifi_view",
+                 "_presenter",
+                 "_webserver",
+                 "_gui_ready",
+                 "_wifi_task",
+                 "_mem_task",
+                 "_wifi_was_connected",
+                 "_running"
+                 )
     def __init__(self):
-        self.status = SystemStatus()
-        self.controller = PitNodeCtrl
-        self.wifi = WiFiWrapper()
-        self.presenter = PitNodePresenter(self.status, self.wifi)
+        self._status = SystemStatus()
+        self._controller = PitNodeCtrl
+        self._wifi = WiFiWrapper(self._status, self._controller.hw.wlan())
+        self._wifi_view = WifiView(self._wifi)
+        self._presenter = PitNodePresenter(self._status,
+                                          self._wifi_view
+                                          )
+        self._webserver = WebServer(self._presenter)
         
+        self._gui_ready = asyncio.Event()
+
         self._wifi_task = None
         self._mem_task = None
         
-        self.gui_ready = asyncio.Event()
-        self.webserver = WebServer(self.presenter)
-        self.presenter.set_reboot_handler(self._request_reboot)
-        self.presenter.set_gui_ready_callback(self._on_gui_ready)
-        self.presenter.set_wifi_config_handler(self._request_wifi_config)
-        self.presenter.set_wifi_abort_handler(lambda: asyncio.create_task(self.exit_wifi_config_mode(aborted=True))
+        self._presenter.set_reboot_handler(self._request_reboot)
+        self._presenter.set_gui_ready_callback(self._on_gui_ready)
+        
+        self._presenter.set_wifi_config_handler(self._request_wifi_config)
+        self._presenter.set_wifi_abort_handler(lambda: asyncio.create_task(self.exit_wifi_config_mode(aborted=True))
 )
         self._wifi_was_connected = False
+        self._running = False
 
     def _request_wifi_config(self):
         asyncio.create_task(self._enter_wifi_config_mode())
 
     async def _enter_wifi_config_mode(self):
         info("[APP] Entering WiFi config mode")
-        self._wifi_was_connected = self.status.wifi_connected
-        await self.webserver.stop()
-        await self.wifi.disconnect()
-        self._update_status()
-        await self.wifi.scan_networks()
+        self._status.wifi.config = True
+        await self._webserver.stop()
+        await self._wifi.disconnect()
+        await self._wifi.scan_networks()
         info("[APP] WiFi scan ready")
 
     async def exit_wifi_config_mode(self, aborted):
         if aborted and self._wifi_was_connected:
+            self._status.wifi.config = False
             info("[APP] WLAN config aborted → restoring WiFi")
-            await self.wifi.wifi_init()
-            self._update_status()
-
-            if self.status.wifi_connected:
-                await self.webserver.start_webserver()
-
-    def _update_status(self):
-        self.status.wifi_connected = self.wifi.connected
+            await self._wifi.wifi_init()
+            if self._status.wifi.connected:
+                await self._webserver.start_webserver()
 
     def _on_gui_ready(self):
-        self.gui_ready.set()
+        self._gui_ready.set()
 
     async def _wait_for_gui_and_start_wifi(self):
-        await self.gui_ready.wait()
+        await self._gui_ready.wait()
         await asyncio.sleep(0)
         await asyncio.sleep(0)
         await asyncio.sleep(0.5)
         info("[APP] GUI ready → starting WiFi")
-        connected = await self.wifi.wifi_init()
-        self._update_status()
+        connected = await self._wifi.wifi_init()
         if connected:
-            await self.webserver.start_webserver()
+            await self._webserver.start_webserver()
         else:
             info("No WiFi connection established. Webserver will not be started.")
 
     async def start(self):
         setup_probes()
-        await self.controller.start_pitnode_ctrl()
+        await self._controller.start_pitnode_ctrl()
         self._wifi_task = asyncio.create_task(
             self._wait_for_gui_and_start_wifi()
         )
@@ -106,9 +113,8 @@ class App:
         if self._mem_task:
             self._mem_task.cancel()
 
-        await self.wifi.stop()
-        await self.controller.stop_pitnode_ctrl()
-        self._update_status()
+        await self._wifi.stop()
+        await self._controller.stop_pitnode_ctrl()
         
     def _request_reboot(self):
         asyncio.create_task(self.reboot())
@@ -124,3 +130,32 @@ class App:
         while True:
             mem("Current mem")
             await asyncio.sleep(5)
+
+class WifiView:
+    __slots__ = ("_wifi")
+
+    def __init__(self, wifi):
+        #self.active = False
+        self._wifi = wifi
+        pass
+
+    def get_scan_result(self):
+        return self._wifi.networks
+    
+    def get_rssi(self):
+        return self._wifi.rssi()
+
+class WiFiStatus:
+    __slots__ = ("connected", "ip", "active", "config")
+
+    def __init__(self):
+        self.connected = False
+        self.ip = None
+        self.active = False
+        self.config = False
+
+class SystemStatus:
+    __slots__ = ("wifi",)
+
+    def __init__(self):
+        self.wifi = WiFiStatus()

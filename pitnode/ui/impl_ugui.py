@@ -13,4 +13,4 @@ import pitnode.ui.ugui_app.screen_measure as screen_measure
 
 async def start_gui(app):
     gc.collect()
-    await screen_measure.start_gui(app.presenter)  # blockiert
+    await screen_measure.start_gui(app._presenter)

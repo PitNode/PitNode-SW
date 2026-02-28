@@ -4,36 +4,29 @@
 # https://www.pitnode.de
 
 
-import asyncio
-
 from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.log.log import info, warn, error
 
 class PitNodePresenter:
-    def __init__(self, status, wifi):
+    def __init__(self, system_status, wifi_view):
         self._on_gui_ready = None
         self.screen = None
-        self._status = status
+        self._status = system_status
+        self._wifi_view = wifi_view
         self._on_reboot = None
         self.websockets = []
         self.num_probe_channels = Ctrl.num_channels()
         self._wifi_config_handler = None
-        self._wifi = wifi
         self._selected_ssid = None
         self._wifi_abort_handler = None
 
+    # Handler
     def set_wifi_abort_handler(self, handler):
         self._wifi_abort_handler = handler
 
     def abort_wifi_config(self):
         if self._wifi_abort_handler:
             self._wifi_abort_handler()
-
-    def set_selected_ssid(self, ssid):
-        self._selected_ssid = ssid
-
-    def get_selected_ssid(self):
-        return self._selected_ssid
 
     def set_wifi_config_handler(self, handler):
         self._wifi_config_handler = handler
@@ -42,11 +35,25 @@ class PitNodePresenter:
         if self._wifi_config_handler:
             self._wifi_config_handler()
 
+    def set_reboot_handler(self, fn):
+        self._on_reboot = fn
+
+    def request_reboot(self):
+        if self._on_reboot:
+            self._on_reboot()
+
+    # API
+    def set_selected_ssid(self, ssid):
+        self._selected_ssid = ssid
+
+    def get_selected_ssid(self):
+        return self._selected_ssid
+
     def get_wifi_networks(self):
-        return self._wifi.networks
+        return self._wifi_view.get_scan_result()
     
     def get_ip(self):
-        ip = self._wifi.wlan.ifconfig()[0]
+        ip = self._status.wifi.ip
         return ip
 
     def get_status(self):
@@ -96,15 +103,6 @@ class PitNodePresenter:
     
     def get_alarms(self):
         return [Ctrl.is_alarm_active(ch) for ch in range(self.num_probe_channels)]
-
-    # ---- user actions (called from lcdgui or websocket) -------------------------
-
-    def set_reboot_handler(self, fn):
-        self._on_reboot = fn
-
-    def request_reboot(self):
-        if self._on_reboot:
-            self._on_reboot()
 
     def inc_target(self, ch):
         tt = Ctrl.get_target_temp(ch)

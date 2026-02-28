@@ -54,7 +54,7 @@ class Menu:
             while True:
                 status = self.presenter.get_status()
                 if status:
-                    wifi = status.wifi_connected
+                    wifi = status.wifi.connected
                     if wifi != last_wifi:
                         self.wifi_label.value(
                             fgcolor=GREEN if wifi else GREY
