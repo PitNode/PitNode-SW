@@ -3,12 +3,21 @@
 // https://github.com/pitnode/pitnode
 // https://www.pitnode.de
 
+const ProbeState = {
+  OK: 0,
+  NOT_CONNECTED: 1,
+  ERROR: 2
+};
+
 let userInteracting = false;
 let temps = [];
 let targets = [];
 let alarms = [];
 let bbq_temp = null;
+let currentUnit = ""
 const channels = {};  // { ch: { tempEl, targetEl, sliderEl } }
+
+const baseRangeC = { min: 0, max: 150 };
 
 const ws = new WebSocket("ws://" + location.host + "/ws");
 
@@ -27,7 +36,18 @@ function createChannel(ch) {
   const slider = clone.querySelector(".ch-slider");
   const alarmBtn = clone.querySelector(".alarm-btn");
 
-  title.innerText = "Channel " + ch;
+  const r = getRange(currentUnit);
+  slider.min = r.min;
+  slider.max = r.max;
+  
+  const units = clone.querySelectorAll(".unit");
+  
+  units.forEach(el => {
+    el.innerText = " " + currentUnit;
+  });
+
+  ch_text = ch + 1
+  title.innerText = "Channel " + ch_text;
 
   slider.addEventListener("pointerdown", () => userInteracting = true);
   slider.addEventListener("pointerup", () => userInteracting = false);
@@ -66,7 +86,8 @@ function createChannel(ch) {
     tempEl: temp,
     targetEl: target,
     sliderEl: slider,
-    alarmBtn: alarmBtn
+    alarmBtn: alarmBtn,
+    unitEls: units
   };
 }
 
@@ -83,16 +104,22 @@ function setAlarmActive(ch, active) {
 }
 
 function updateChannel(ch) {
-  const t = temps[ch];
-  if (typeof t !== "number") return;
 
   if (!channels[ch]) {
     createChannel(ch);
   }
 
   const channel = channels[ch];
+  const t = temps[ch];
 
-  channel.tempEl.innerText = t.toFixed(1) + " °C";
+  if (!Number.isFinite(t)) {
+    channel.tempEl.innerText = "Probe not connected";
+    channel.unitEls.forEach(el => el.innerText = "");
+    return;
+  }
+
+  channel.tempEl.innerText = t.toFixed(1);
+  channel.unitEls.forEach(el => el.innerText = " " + currentUnit);
 
   const tt = targets[ch] ?? 0;
 
@@ -106,11 +133,46 @@ function updateChannel(ch) {
 }
 
 function updateBBQ() {
-  const bbq_title   = document.querySelector(".bbq-title");
+  const bbq_title    = document.querySelector(".bbq-title");
   const bbq_temp_lbl = document.querySelector(".bbq-temp");
+  const bbq_unit_lbl = document.querySelector(".bbq-unit");
 
-  bbq_title.innerText = "BBQ"
-  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " °C";
+  bbq_title.innerText = "BBQ";
+
+  if (!Number.isFinite(bbq_temp)) {
+    bbq_temp_lbl.innerText = "Probe not connected";
+    if (bbq_unit_lbl) bbq_unit_lbl.innerText = "";
+    return;
+  }
+
+  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " °" + currentUnit;
+}
+
+function updateAllUnits() {
+  document.querySelectorAll(".unit").forEach(el => {
+    el.innerText = " " + currentUnit;
+  });
+}
+
+function updateSliderRanges() {
+  const r = getRange(currentUnit);
+
+  document.querySelectorAll(".ch-slider").forEach(slider => {
+    slider.min = r.min;
+    slider.max = r.max;
+  });
+}
+
+function getRange(unit) {
+  if (unit === "C") {
+    return baseRangeC;
+  }
+
+  // °F ableiten aus C-Grenzen
+  return {
+    min: Math.round(baseRangeC.min * 9/5 + 32),
+    max: Math.round(baseRangeC.max * 9/5 + 32)
+  };
 }
 
 function handleMessage(msg) {
@@ -118,7 +180,11 @@ function handleMessage(msg) {
 
   switch (data.type) {
     case "temp":
-      temps[data.ch] = data.value;
+      if (data.state !== ProbeState.OK) {
+        temps[data.ch] = null;
+      } else {
+        temps[data.ch] = data.value;
+      }
       updateChannel(data.ch);
       break;
 
@@ -135,6 +201,12 @@ function handleMessage(msg) {
     case "bbq_temp":
       bbq_temp = data.value;
       updateBBQ();
+      break;
+
+    case "unit":
+      currentUnit = data.value;
+      updateAllUnits();
+      updateSliderRanges();
       break;
   }
 }

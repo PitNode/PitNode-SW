@@ -37,7 +37,7 @@ class App:
     def __init__(self):
         self._status = SystemStatus()
         self._controller = PitNodeCtrl
-        self._wifi = WiFiWrapper(self._status, self._controller.hw.wlan())
+        self._wifi = WiFiWrapper(self._status, self._controller.hw.wlan()) # type: ignore
         self._wifi_view = WifiView(self._wifi)
         self._presenter = PitNodePresenter(self._status,
                                           self._wifi_view
@@ -50,6 +50,7 @@ class App:
         self._mem_task = None
         
         self._presenter.set_reboot_handler(self._request_reboot)
+        self._wifi.set_reboot_handler(self._request_reboot)
         self._presenter.set_gui_ready_callback(self._on_gui_ready)
         
         self._presenter.set_wifi_config_handler(self._request_wifi_config)
@@ -62,6 +63,7 @@ class App:
         asyncio.create_task(self._enter_wifi_config_mode())
 
     async def _enter_wifi_config_mode(self):
+        self._wifi_was_connected = self._wifi._wlan.isconnected()
         info("[APP] Entering WiFi config mode")
         self._status.wifi.config = True
         await self._webserver.stop()
@@ -70,6 +72,7 @@ class App:
         info("[APP] WiFi scan ready")
 
     async def exit_wifi_config_mode(self, aborted):
+        info(f"[APP] exit_wifi_config_mode called, aborted={aborted}, was_connected={self._wifi_was_connected}")
         if aborted and self._wifi_was_connected:
             self._status.wifi.config = False
             info("[APP] WLAN config aborted → restoring WiFi")
@@ -117,13 +120,6 @@ class App:
         await self._controller.stop_pitnode_ctrl()
         
     def _request_reboot(self):
-        asyncio.create_task(self.reboot())
-
-    async def reboot(self):
-        self._running = False
-        info("[APP] reboot")
-        await asyncio.sleep(0)
-        await self.stop()
         reset()
     
     async def _mem_info(self):
@@ -135,7 +131,6 @@ class WifiView:
     __slots__ = ("_wifi")
 
     def __init__(self, wifi):
-        #self.active = False
         self._wifi = wifi
         pass
 

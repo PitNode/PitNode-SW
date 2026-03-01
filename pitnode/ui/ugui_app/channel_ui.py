@@ -9,6 +9,7 @@ from gui.core.tgui import Screen, Window
 from gui.widgets import Label, Button, Pad
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
+from config import UNIT
 #from gui.core.colors import *
 from pitnode.ui.ugui_app.colors import *
 from pitnode.log.log import error, info
@@ -57,7 +58,8 @@ class ChannelUI:
             unit_label_width,
             justify=Label.CENTRE
         )
-        lbl_meas_unit.value("°C")
+
+        lbl_meas_unit.value(self.presenter.unit)
 
         temp_label_width = 70
         temp_label_start_row = lbl_meas_unit.mrow + 10
@@ -106,8 +108,9 @@ class ChannelUI:
         )
     
 class BBQchUI:
-    def __init__(self) -> None:
+    def __init__(self, presenter) -> None:
         self.temp_label = None
+        self.presenter = presenter
 
     def bbq_card(self, row, col):
         # Title
@@ -134,12 +137,13 @@ class BBQchUI:
             wrt_md_red,
             row,
             lbl_bbq_meas.mcol,
-            "°C",
+            self.presenter.unit,
         )
         return self
 
 class TargetTempWindow(Window):
     def __init__(self, col, row, w, h, ch, presenter):
+        self.presenter = presenter
         super().__init__(col, row, w, h, bgcolor=DEF_BG)
 
         def on_value(value):
@@ -154,7 +158,7 @@ class TargetTempWindow(Window):
             row=10,
             col=10,
             initial=str(int(presenter.get_target(ch))),
-            unit=" °C",
+            unit=self.presenter.unit,
             on_ok=on_value,
         )
 

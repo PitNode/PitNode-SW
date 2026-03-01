@@ -6,6 +6,7 @@
 
 from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.log.log import info, warn, error
+from config import UNIT
 
 class PitNodePresenter:
     def __init__(self, system_status, wifi_view):
@@ -19,6 +20,14 @@ class PitNodePresenter:
         self._wifi_config_handler = None
         self._selected_ssid = None
         self._wifi_abort_handler = None
+        self.unit = None
+
+        if UNIT == "cel":
+            self.unit = "°C"
+        elif UNIT == "far":
+            self.unit = "°F"
+        else:
+            error("Not a valid unit in config file")
 
     # Handler
     def set_wifi_abort_handler(self, handler):
@@ -43,6 +52,9 @@ class PitNodePresenter:
             self._on_reboot()
 
     # API
+    def get_unit(self):
+        return self.unit
+
     def set_selected_ssid(self, ssid):
         self._selected_ssid = ssid
 

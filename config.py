@@ -7,8 +7,8 @@
 User configuration file for PitNode
 """
 
-# Unit for temperature "deg" or "far"
-UNIT = "deg"
+# Unit for temperature "cel" or "far"
+UNIT = "cel"
 
 # Probe parameters
 T_NTC_0_MK = [298150, 298150, 298150] # in mK

@@ -93,7 +93,7 @@ class PitNodeCtrl:
         if not cls._tc_deg_c_valid or cls._tc_deg_c_value is None:
             return None
         t = cls._tc_deg_c_value
-        return t if cfg.UNIT == "deg" else (t * 9 / 5 + 32)
+        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
 
     @classmethod
     def get_temp(cls, ch: int) -> None | bool | float:
@@ -110,13 +110,13 @@ class PitNodeCtrl:
             warn("Temperature is not valid")
             return None
         t = cls._probe_deg_c_value[ch]
-        return t if cfg.UNIT == "deg" else (t * 9 / 5 + 32)
+        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
 
     @classmethod
     def get_temps(cls) -> list:
         """Return all temperatures as list."""
         temps = cls._probe_deg_c_value
-        return temps if cfg.UNIT == "deg" else ([(t * 9 / 5 + 32) for t in temps])
+        return temps if cfg.UNIT == "cel" else ([(t * 9 / 5 + 32) for t in temps])
 
     @classmethod
     def get_probe_states(cls) -> list:
@@ -141,7 +141,7 @@ class PitNodeCtrl:
         if not _is_valid_target(cls._probe_target_valid, ch):
             return None
         t = cls._probe_target_deg_c_value[ch]
-        return t if cfg.UNIT == "deg" else (t * 9 / 5 + 32)
+        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
 
     @classmethod
     def get_target_temps(cls) -> list:
@@ -220,7 +220,7 @@ class PitNodeCtrl:
         if not isinstance(temp, (int, float)):
             return False
     
-        if cfg.UNIT == "deg":
+        if cfg.UNIT == "cel":
             cls._probe_target_deg_c_value[ch] = temp
         elif cfg.UNIT == "far":
             cls._probe_target_deg_c_value[ch] = (temp - 32) * 5 / 9
@@ -254,7 +254,7 @@ class PitNodeCtrl:
         # Reset confirm alarm flag
         cls._alarm_acked_flag &= ~(1 << ch)
 
-        step_c = step if cfg.UNIT == "deg" else step * 5 / 9
+        step_c = step if cfg.UNIT == "cel" else step * 5 / 9
         cls._probe_target_deg_c_value[ch] += step_c
         cls._probe_target_valid |= 1 << ch
         return True
@@ -275,7 +275,7 @@ class PitNodeCtrl:
         # Reset confirm alarm flag
         cls._alarm_acked_flag &= ~(1 << ch)
 
-        step_c = step if cfg.UNIT == "deg" else step * 5 / 9
+        step_c = step if cfg.UNIT == "cel" else step * 5 / 9
         cls._probe_target_deg_c_value[ch] -= step_c
         cls._probe_target_valid |= 1 << ch
         return True

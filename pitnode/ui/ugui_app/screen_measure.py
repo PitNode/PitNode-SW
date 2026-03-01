@@ -96,7 +96,7 @@ class MeasureScreen(Screen):
             self.target_labels.append(ch_ui_list[ch].target_label) # type:ignore
             self.ledbars.append(ch_ui_list[ch].ledbar) # type:ignore
         
-        bbq_ui = BBQchUI()
+        bbq_ui = BBQchUI(self.presenter)
         bbq_ui.bbq_card(4+Pos.margin, 4+Pos.margin)
         self.tc_temp_label = bbq_ui.temp_label
 

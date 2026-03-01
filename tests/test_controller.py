@@ -20,7 +20,7 @@ def valid_controller():
         PitNodeCtrl.register_probe(ch, probe)
     
     # Config auf Default setzen
-    config.UNIT = "deg"
+    config.UNIT = "cel"
 
     # set values to valid temps
     PitNodeCtrl._probe_target_deg_c_value = [51.0, 52.0, 53.0]
@@ -39,7 +39,7 @@ def valid_controller():
 @pytest.fixture
 def valid_no_probes_controller():
     # Config auf Default setzen
-    config.UNIT = "deg"
+    config.UNIT = "cel"
 
     # set values to valid temps
     PitNodeCtrl._probe_target_deg_c_value = [51.0, 52.0, 53.0]
@@ -84,11 +84,11 @@ def test_set_target_temp_deg(valid_controller: PitNodeCtrl):
     assert ctrl.is_temp_valid(1) == True
 
 def test_invalid_channel_negative():
-    config.UNIT = "deg"
+    config.UNIT = "cel"
     assert PitNodeCtrl.set_target_temp(-1, 100) is False
 
 def test_invalid_temp_type():
-    config.UNIT = "deg"
+    config.UNIT = "cel"
     assert PitNodeCtrl.set_target_temp(0, "hot") is False #type:ignore
 
 

@@ -29,8 +29,12 @@ class TcFilter:
                 self.state = ProbeState.OK
             return self.value
 
-        if abs(raw - self.value) > 3.0:
-            return self.value
+        delta = raw - self.value
+
+        if abs(delta) > 20:
+            delta = 20 if delta > 0 else -20
+
+        self.value += 0.1 * delta
 
         self.value += 0.1 * (raw - self.value)
         self.state = ProbeState.OK

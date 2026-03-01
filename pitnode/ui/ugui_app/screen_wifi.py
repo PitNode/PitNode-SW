@@ -108,11 +108,3 @@ class WLANsetupScreen(Screen):
             g[1, 0:10] = iter(";:@'#<>?/\\")
             g[2, 0:10] = iter(",.-_+=[]{}")
             g[3, 0:10] = iter("°μπωϕθαβγδ")
-
-    def on_hide(self):
-        #import sys, gc
-        #if "gui.fonts.freesans20_ext" in sys.modules:
-        #    del sys.modules["gui.fonts.freesans20_ext"]
-        #    info("Keyboard font removed")
-        #gc.collect()
-        pass

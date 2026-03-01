@@ -57,6 +57,8 @@ async def ws_send(writer, text):
 # WebSocket Session
 async def websocket_session(reader, writer, presenter):
     ws = WebSocketClient(writer)
+    unit = presenter.get_unit()
+    await ws.update_unit(unit)
     push_task = asyncio.create_task(ws_push_loop(ws, presenter))
     try:
         while True:
@@ -103,8 +105,9 @@ async def ws_push_loop(ws, presenter):
             targets = presenter.get_targets()
             alarms = presenter.get_alarms()
             bbq_temp = presenter.get_tc_temp()
+            states = presenter.get_probe_states()
             for ch, t in enumerate(temps):
-                await ws.update_temp(ch, t)
+                await ws.update_temp(ch, t, states[ch])
             for ch, tt in enumerate(targets):
                 await ws.update_target(ch, tt)
             for ch, a in enumerate(alarms):
@@ -149,11 +152,12 @@ async def ws_send_json(writer, obj):
 class WebSocketClient:
     def __init__(self, writer):
         self.writer = writer
-    async def update_temp(self, ch, temp):
+    async def update_temp(self, ch, temp, state):
         await ws_send_json(self.writer, {
             "type": "temp",
             "ch": ch,
-            "value": temp
+            "value": temp,
+            "state": state
         })
 
     async def update_target(self, ch, target):
@@ -174,4 +178,10 @@ class WebSocketClient:
         await ws_send_json(self.writer, {
             "type": "bbq_temp",
             "value": temp
+        })
+
+    async def update_unit(self, unit):
+        await ws_send_json(self.writer, {
+            "type": "unit",
+            "value": unit
         })
