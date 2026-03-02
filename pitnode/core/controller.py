@@ -3,9 +3,30 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import time
-import asyncio
-from math import log
+
+try:
+    from time import ticks_ms, ticks_diff, ticks_add #type:ignore
+except ImportError:
+    import time
+
+    def ticks_ms():
+        return int(time.monotonic() * 1000) #type:ignore
+
+    def ticks_diff(a, b):
+        return a - b
+    
+    def ticks_add(a, b):
+        return a + b
+
+try:
+    import uasyncio as asyncio
+    sleep_ms = asyncio.sleep_ms #type:ignore
+except ImportError:
+    import asyncio
+
+    async def sleep_ms(ms: int):
+        await asyncio.sleep(ms / 1000)
+
 import config as cfg
 from pitnode.core.probe import ProbeState, OPEN_THRESHOLD, VALID_THRESHOLD, NtcProbe
 from pitnode.core.sensor_eval import eval_resistance_raw
@@ -374,11 +395,11 @@ class PitNodeCtrl:
     @classmethod
     async def _measure_loop(cls):
         period_ms = 500
-        next_t = time.ticks_ms()
+        next_t = ticks_ms()
         try:
             while cls._running:
-                now = time.ticks_ms()
-                late = time.ticks_diff(now, next_t)
+                now = ticks_ms()
+                late = ticks_diff(now, next_t)
                 if late > 50:   # z. B. 50 ms Toleranz
                     if cfg.DEV_MODE is True:
                         warn(f"Measurement late: {late} ms")
@@ -401,9 +422,9 @@ class PitNodeCtrl:
                 except Exception as e:
                     error(f"Error during measurement: {e}")
                 
-                next_t = time.ticks_add(next_t, period_ms)
-                await asyncio.sleep_ms(
-                    max(0, time.ticks_diff(next_t, time.ticks_ms()))
+                next_t = ticks_add(next_t, period_ms)
+                await sleep_ms(
+                    max(0, ticks_diff(next_t, ticks_ms()))
                 )
         finally:
             info("Measurement task stopped")

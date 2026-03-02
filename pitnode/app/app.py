@@ -3,7 +3,7 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-from machine import reset
+#from machine import reset
 import asyncio
 
 from pitnode.core.controller import PitNodeCtrl
@@ -18,7 +18,12 @@ import gc
 
 def mem(tag):
     gc.collect()
-    print(tag, gc.mem_free(), gc.mem_alloc())
+
+    if hasattr(gc, "mem_free"):
+        print(tag, gc.mem_free(), gc.mem_alloc())
+    else:
+        # CPython fallback
+        print(tag, "mem stats not available on CPython")
 
 class App:
     __slots__ = ("_status",
@@ -120,7 +125,7 @@ class App:
         await self._controller.stop_pitnode_ctrl()
         
     def _request_reboot(self):
-        reset()
+        self._controller.hw.reboot() #type:ignore
     
     async def _mem_info(self):
         while True:

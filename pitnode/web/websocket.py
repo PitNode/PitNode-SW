@@ -3,12 +3,27 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import uasyncio as asyncio
+try:
+    import uasyncio as asyncio
+except ImportError:
+    import asyncio
+
 import gc
 
-import uhashlib
-import ubinascii
-import ujson
+try:
+    import uhashlib as hashlib
+except ImportError:
+    import hashlib
+
+try:
+    import ubinascii as binascii
+except ImportError:
+    import binascii
+
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 from pitnode.log.log import error, info
 
@@ -17,8 +32,8 @@ WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 # Handshake helper
 def websocket_accept(key):
-    sha1 = uhashlib.sha1((key + WS_GUID).encode()).digest()
-    return ubinascii.b2a_base64(sha1).strip().decode()
+    sha1 = hashlib.sha1((key + WS_GUID).encode()).digest()
+    return binascii.b2a_base64(sha1).strip().decode()
 
 # Frame receive (Client -> Server)
 # only: text, <125 Bytes, masked (Browser!)
@@ -78,7 +93,7 @@ async def websocket_session(reader, writer, presenter):
             if opcode != 0x1:
                 continue
             try:
-                data = ujson.loads(payload)
+                data = json.loads(payload)
             except ValueError:
                 error(f"[WS] Invalid JSON: {payload!r}")
                 continue
@@ -138,7 +153,7 @@ async def handle_websocket(reader, writer, headers, presenter):
         info(f"[WS] Connection closed: {e}")
 
 async def ws_send_json(writer, obj):
-    data = ujson.dumps(obj).encode()
+    data = json.dumps(obj).encode()
     length = len(data)
     if length >= 126:
         return  # ignore

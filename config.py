@@ -19,7 +19,9 @@ R_NTC_0_OHM = [100000, 100000, 100000] # in Ohm
 PROBES = ["NTC", "NTC", "NTC"]
 
 ENABLE_WIFI = True
-SERVER_START_TIMEOUT = 3
 
 # Flag is only for development
 DEV_MODE = True
+
+WEB_PORT = 80
+WEB_PORT_DEV = 8080

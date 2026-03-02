@@ -6,8 +6,6 @@
 import asyncio
 import gc
 import time
-from math import sin
-from micropython import const
 
 import touch_setup as touch_setup
 from gui.core.tgui import Screen, ssd

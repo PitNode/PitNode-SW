@@ -3,7 +3,7 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-from machine import ADC, SoftSPI, Pin, PWM, reset
+from machine import ADC, SoftSPI, Pin, PWM, reset, unique_id
 import network
 import pitnode.driver.max6675 as max6675
 import pitnode.driver.hw_config as hw_cfg
@@ -27,6 +27,7 @@ class RPiPico:
     #wifi_driver = PicoWiFiDriver()
     _wlan = network.WLAN(network.STA_IF)
     _wlan.active(False)
+    _wlan_cfg_path  = "."
 
     @classmethod
     def wlan(cls):
@@ -51,3 +52,7 @@ class RPiPico:
     @classmethod
     def reboot(cls):
         reset()
+    
+    @classmethod
+    def unique_id(cls):
+        return unique_id()

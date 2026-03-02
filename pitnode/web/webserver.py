@@ -3,13 +3,28 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import uasyncio as asyncio
+try:
+    import uasyncio as asyncio
+except ImportError:
+    import asyncio
+
 import gc
 
 from pitnode.web.websocket import handle_websocket
 from pitnode.log.log import error, info
-from config import SERVER_START_TIMEOUT
+from config import WEB_PORT, WEB_PORT_DEV, DEV_MODE
 
+if DEV_MODE:
+    port = WEB_PORT_DEV
+else:
+    port = WEB_PORT
+
+WEB_ROOT = "pitnode/web"
+
+def build_path(path):
+    if path == "/":
+        return WEB_ROOT + "/index.html"
+    return WEB_ROOT + "/" + path.lstrip("/")
 
 class WebServer:
     def __init__(self, presenter):
@@ -23,7 +38,7 @@ class WebServer:
             self._server = await asyncio.start_server(
                 lambda r, w: http_handler(r, w, self.presenter),
                 "0.0.0.0",
-                80
+                port
             )
             info("[WEB] Webserver gestartet")
         except Exception as e:
@@ -76,7 +91,7 @@ async def http_handler(reader, writer, presenter):
     if path.endswith(".css"):
         await send_file(
             writer,
-            "/pitnode/web" + path,
+            build_path(path),
             "text/css"
         )
         writer.close()
@@ -87,7 +102,7 @@ async def http_handler(reader, writer, presenter):
     if path.endswith(".png"):
         await send_file(
             writer,
-            "/pitnode/web" + path,
+            build_path(path),
             "image/png"
         )
         writer.close()
@@ -98,7 +113,7 @@ async def http_handler(reader, writer, presenter):
     if path.endswith("/app.js"):
         await send_file(
             writer,
-            "/pitnode/web" + path,
+            build_path(path),
             "application/javascript"
         )
         writer.close()
@@ -109,7 +124,7 @@ async def http_handler(reader, writer, presenter):
     if path == "/":
         await send_file(
             writer,
-            "/pitnode/web/index.html",
+            build_path(path),
             "text/html"
         )
         writer.close()
