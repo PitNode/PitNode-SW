@@ -27,7 +27,8 @@ class RPiPico:
     #wifi_driver = PicoWiFiDriver()
     _wlan = network.WLAN(network.STA_IF)
     _wlan.active(False)
-    _wlan_cfg_path  = "."
+    wlan_cfg_path  = "."
+    num_probe_channels = hw_cfg.PROBE_CHANNELS
 
     @classmethod
     def wlan(cls):

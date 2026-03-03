@@ -102,6 +102,7 @@ async def websocket_session(reader, writer, presenter):
             if data.get("cmd") == "set_target":
                 presenter.set_target_temp(data["ch"], data["value"])
             if data.get("cmd") == "confirm_alarm":
+                info(f"[WS] Received confirm_alarm: {data}")
                 presenter.confirm_alarm(data["ch"])
     finally:
         push_task.cancel()

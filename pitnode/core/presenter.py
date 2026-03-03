@@ -4,19 +4,18 @@
 # https://www.pitnode.de
 
 
-from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.log.log import info, warn, error
 from config import UNIT
 
 class PitNodePresenter:
-    def __init__(self, system_status, wifi_view):
+    def __init__(self, system_status, wifi_view, ctrl):
         self._on_gui_ready = None
         self.screen = None
         self._status = system_status
         self._wifi_view = wifi_view
         self._on_reboot = None
         self.websockets = []
-        self.num_probe_channels = Ctrl.num_channels()
+        self._ctrl = ctrl
         self._wifi_config_handler = None
         self._selected_ssid = None
         self._wifi_abort_handler = None
@@ -72,7 +71,7 @@ class PitNodePresenter:
         return self._status
     
     def get_num_probe_channels(self):
-        return self.num_probe_channels
+        return self._ctrl.num_channels
 
     def set_gui_ready_callback(self, cb):
         self._on_gui_ready = cb
@@ -96,48 +95,48 @@ class PitNodePresenter:
             self.websockets.remove(ws)
 
     def get_tc_temp(self):
-        return Ctrl.get_tc_temp()
+        return self._ctrl.get_tc_temp()
 
     def get_temps(self):
-        return Ctrl.get_temps()
+        return self._ctrl.get_temps()
     
     def get_probe_states(self):
-        return Ctrl.get_probe_states()
+        return self._ctrl.get_probe_states()
 
     def get_tc_probe_state(self):
-        return Ctrl.get_tc_probe_state()
+        return self._ctrl.get_tc_probe_state()
 
     def get_targets(self):
-        return Ctrl.get_target_temps()
+        return self._ctrl.get_target_temps()
     
     def get_target(self, ch):
-        return Ctrl.get_target_temp(ch)
+        return self._ctrl.get_target_temp(ch)
     
     def get_alarms(self):
-        return [Ctrl.is_alarm_active(ch) for ch in range(self.num_probe_channels)]
+        return [self._ctrl.is_alarm_active(ch) for ch in range(self._ctrl.hw.num_probe_channels)]
 
     def inc_target(self, ch):
-        tt = Ctrl.get_target_temp(ch)
-        if tt != None and Ctrl.increase_target_temp(ch, 1):
+        tt = self._ctrl.get_target_temp(ch)
+        if tt != None and self._ctrl.increase_target_temp(ch, 1):
             screen=self.screen
             if screen:
-                screen.update_target(ch, Ctrl.get_target_temp(ch)) # type: ignore
+                screen.update_target(ch, self._ctrl.get_target_temp(ch)) # type: ignore
 
     def dec_target(self, ch):
-        tt = Ctrl.get_target_temp(ch)
-        if tt != None and Ctrl.decrease_target_temp(ch, 1):
+        tt = self._ctrl.get_target_temp(ch)
+        if tt != None and self._ctrl.decrease_target_temp(ch, 1):
             screen=self.screen
             if screen:
-                screen.update_target(ch, Ctrl.get_target_temp(ch)) # type: ignore
+                screen.update_target(ch, self._ctrl.get_target_temp(ch)) # type: ignore
 
     def set_target_temp(self, ch, temp):
-        Ctrl.set_target_temp(ch, temp)
+        self._ctrl.set_target_temp(ch, temp)
         screen=self.screen
         if screen:
             self.screen.update_target(ch, temp) # type: ignore
 
     def set_target_temps(self, target_temps):
-        status = Ctrl.set_target_temps(target_temps)
+        status = self._ctrl.set_target_temps(target_temps)
         screen=self.screen
         for ch, tt, st in zip(range(screen.num_channels_pp), target_temps, status): # type: ignore
             if st:
@@ -145,17 +144,18 @@ class PitNodePresenter:
                     self.screen.update_target(ch, tt) # type: ignore
 
     def reset_alarm(self, ch):
-        Ctrl.reset_alarm(ch)
+        self._ctrl.reset_alarm(ch)
         if self.screen:
             self.screen.set_alarm(ch, False) # type: ignore
 
     def confirm_alarm(self, ch):
-        Ctrl.confirm_alarm(ch)
+        info(f"Presenter confirm_alarm called with: {ch}")
+        self._ctrl.confirm_alarm(ch)
 
     def is_alarm_active(self, ch):
-        return Ctrl.is_alarm_active(ch)
+        return self._ctrl.is_alarm_active(ch)
     
     def is_alarm_confirmed(self, ch):
-        return Ctrl.is_alarm_confirmed(ch)
+        return self._ctrl.is_alarm_confirmed(ch)
 
 

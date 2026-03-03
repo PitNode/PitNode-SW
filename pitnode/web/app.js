@@ -14,7 +14,7 @@ let temps = [];
 let targets = [];
 let alarms = [];
 let bbq_temp = null;
-let currentUnit = ""
+let currentUnit = "C";
 const channels = {};  // { ch: { tempEl, targetEl, sliderEl } }
 
 const baseRangeC = { min: 0, max: 150 };
@@ -72,6 +72,7 @@ function createChannel(ch) {
 
   alarmBtn.addEventListener("click", () => {
   if (ws.readyState === WebSocket.OPEN) {
+      console.log("Confirm clicked for channel:", ch);
       ws.send(JSON.stringify({
       cmd: "confirm_alarm",
       ch: ch
@@ -168,11 +169,15 @@ function getRange(unit) {
     return baseRangeC;
   }
 
-  // °F ableiten aus C-Grenzen
-  return {
-    min: Math.round(baseRangeC.min * 9/5 + 32),
-    max: Math.round(baseRangeC.max * 9/5 + 32)
-  };
+  if (unit === "F") {
+    return {
+      min: Math.round(baseRangeC.min * 9/5 + 32),
+      max: Math.round(baseRangeC.max * 9/5 + 32)
+    };
+  }
+
+  // Fallback → C
+  return baseRangeC;
 }
 
 function handleMessage(msg) {

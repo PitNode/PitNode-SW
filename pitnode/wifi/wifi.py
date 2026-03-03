@@ -12,12 +12,13 @@ from pitnode.log.log import error, info, warn
 
 
 class WiFiWrapper:
-    def __init__(self, system_status, wlan):
+    def __init__(self, system_status, wlan, cfg_path, hw_uid):
         self._lock = asyncio.Lock()
         self._system_status = system_status
-        #self._wlan = None
         self._wlan = wlan
         self._networks = []
+        self._cfg_path = cfg_path
+        self._hw_uid = hw_uid
 
     @property
     def networks(self):
@@ -87,8 +88,8 @@ class WiFiWrapper:
         if not ENABLE_WIFI:
             info("WLAN deaktiviert")
             return False
-        ssid = load_ssid()
-        pw = load_password()
+        ssid = load_ssid(self._cfg_path)
+        pw = load_password(self._cfg_path, self._hw_uid)
         if not pw or not ssid:
             info("[WIFI] No password or SSID for WiFi set. Skipping.")
             return False

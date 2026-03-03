@@ -5,21 +5,21 @@
 
 import asyncio
 from pitnode.app.app import App
-from pitnode.core.controller import PitNodeCtrl as Ctrl
+
 
 async def start_ui():
     from pitnode.ui.impl_ugui import start_gui
     from pitnode.driver.rpi_pico import RPiPico
-    Ctrl.hw = RPiPico  # type: ignore
-    app = App()
+    hw = RPiPico()  # type: ignore
+    app = App(hw=hw)
     await app.start()
     await start_gui(app)
 
 async def start_local():
     from pitnode.driver.mock_hw import MockHw
-    Ctrl.hw = MockHw  # type: ignore
-    Ctrl.hw.set_mock_pw() # type: ignore
-    app = App()
+    hw = MockHw()  # type: ignore
+    hw.set_mock_pw() # type: ignore
+    app = App(hw=hw)
     await app.start()
     app._on_gui_ready()
     try:

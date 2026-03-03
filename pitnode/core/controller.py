@@ -37,63 +37,69 @@ from pitnode.log.log import info, warn, error
 
 class PitNodeCtrl:
     """Class for controlling the PitNode"""
-    hw = None # type: ignore
-    _running = False
-    _tasks = []
-    _probes = [None] * hw_cfg.PROBE_CHANNELS # type: list[NtcProbe | None]
-    _probe_raw_value = [0] * hw_cfg.PROBE_CHANNELS
-    _probe_raw_valid = 0
-    _probe_mv_value = [0] * hw_cfg.PROBE_CHANNELS
-    _probe_mv_valid = 0
-    _probe_deg_c_value = [0.0] * hw_cfg.PROBE_CHANNELS
-    _probe_deg_c_valid = 0
-    _probe_resistance_value = [0] * hw_cfg.PROBE_CHANNELS
-    _probe_resistance_valid = 0
-    _probe_state = [ProbeState.OPEN] * hw_cfg.PROBE_CHANNELS
-    _tc_raw = 0
-    _tc_deg_c_value = None
-    _tc_deg_c_valid = 0
-    _tc_probe_state = ProbeState.OPEN
-    _tc_open_cnt = 0
-    _tc_valid_cnt = 0
-    _probe_target_deg_c_value = [50.0] * hw_cfg.PROBE_CHANNELS
-    _probe_target_valid = 0b111
-    alarms = [False] * hw_cfg.PROBE_CHANNELS
-    _buzzer = False
-    _alarm_acked_flag = 0
-    _num_channels = hw_cfg.PROBE_CHANNELS
+    def __init__(self, hw=None) -> None:
+        self._hw = hw
+        self._running = False
+        self._tasks = []
+        self._probes = [None] * hw_cfg.PROBE_CHANNELS # type: list[NtcProbe | None]
+        self._probe_raw_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probe_raw_valid = 0
+        self._probe_mv_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probe_mv_valid = 0
+        self._probe_deg_c_value = [0.0] * hw_cfg.PROBE_CHANNELS
+        self._probe_deg_c_valid = 0
+        self._probe_resistance_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probe_resistance_valid = 0
+        self._probe_state = [ProbeState.OPEN] * hw_cfg.PROBE_CHANNELS
+        self._tc_raw = 0
+        self._tc_deg_c_value = None
+        self._tc_deg_c_valid = 0
+        self._tc_probe_state = ProbeState.OPEN
+        self._tc_open_cnt = 0
+        self._tc_valid_cnt = 0
+        self._probe_target_deg_c_value = [50.0] * hw_cfg.PROBE_CHANNELS
+        self._probe_target_valid = 0b111
+        self._alarms = [False] * hw_cfg.PROBE_CHANNELS
+        self._buzzer = False
+        self._alarm_acked_flag = 0
+        self._num_channels = hw_cfg.PROBE_CHANNELS
+    
+    @property
+    def hw(self):
+        return self._hw
 
-    @classmethod
-    def num_channels(cls):
-        return cls._num_channels
-
-    @classmethod
-    async def start_pitnode_ctrl(cls):
-        if cls._running:
+    @property
+    def alarms(self):
+        return self._alarms
+    
+    @property
+    def num_channels(self):
+        return self._num_channels
+    
+    async def start_pitnode_ctrl(self):
+        if self._running:
             return
-        if not cls._probes:
+        if not self._probes:
             return
-        cls._tc_filter = TcFilter()
-        cls._running = True
-        cls._tasks = [
-            asyncio.create_task(cls._measure_loop()),
-            asyncio.create_task(cls._alarm_task())
+        self._tc_filter = TcFilter()
+        self._running = True
+        self._tasks = [
+            asyncio.create_task(self._measure_loop()),
+            asyncio.create_task(self._alarm_task())
         ]
 
-    @classmethod
-    async def stop_pitnode_ctrl(cls):
-        if not cls._running:
+    async def stop_pitnode_ctrl(self):
+        if not self._running:
             return
-        cls._running = False
-        for t in cls._tasks:
+        self._running = False
+        for t in self._tasks:
             try:
                 await t
             except asyncio.CancelledError:
                 pass
-        cls._tasks.clear()
+        self._tasks.clear()
 
-    @classmethod
-    def register_probe(cls, ch: int, probe) -> bool:
+    def register_probe(self, ch: int, probe) -> bool:
         """
         Register a probe to HW channel.
         Returns True if register was successful. Otherwise returns False.
@@ -106,18 +112,16 @@ class PitNodeCtrl:
             warn("Invalid probe type given to register_probe")
             return False
 
-        cls._probes[ch] = probe
+        self._probes[ch] = probe
         return True
 
-    @classmethod
-    def get_tc_temp(cls):
-        if not cls._tc_deg_c_valid or cls._tc_deg_c_value is None:
+    def get_tc_temp(self):
+        if not self._tc_deg_c_valid or self._tc_deg_c_value is None:
             return None
-        t = cls._tc_deg_c_value
+        t = self._tc_deg_c_value
         return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
-
-    @classmethod
-    def get_temp(cls, ch: int) -> None | bool | float:
+    
+    def get_temp(self, ch: int) -> None | bool | float:
         """
         Return the temperature for given channel.
         Return False if channel invalid.
@@ -127,30 +131,26 @@ class PitNodeCtrl:
         if not _is_valid_channel(ch):
             warn("Invalid channel given to get_temp()")
             return False
-        if not _is_valid_temp(cls._probe_deg_c_valid, ch):
+        if not _is_valid_temp(self._probe_deg_c_valid, ch):
             warn("Temperature is not valid")
             return None
-        t = cls._probe_deg_c_value[ch]
+        t = self._probe_deg_c_value[ch]
         return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
 
-    @classmethod
-    def get_temps(cls) -> list:
+    def get_temps(self) -> list:
         """Return all temperatures as list."""
-        temps = cls._probe_deg_c_value
+        temps = self._probe_deg_c_value
         return temps if cfg.UNIT == "cel" else ([(t * 9 / 5 + 32) for t in temps])
 
-    @classmethod
-    def get_probe_states(cls) -> list:
+    def get_probe_states(self) -> list:
         """Return all probe states as list."""
-        return cls._probe_state
+        return self._probe_state
 
-    @classmethod
-    def get_tc_probe_state(cls):
+    def get_tc_probe_state(self):
         """Return TC probe state."""
-        return cls._tc_probe_state
+        return self._tc_probe_state
 
-    @classmethod
-    def get_target_temp(cls, ch: int) -> None | bool | float:
+    def get_target_temp(self, ch: int) -> None | bool | float:
         """
         Return target temp of channel.
         Return False if ch invalid.
@@ -159,69 +159,61 @@ class PitNodeCtrl:
         if not _is_valid_channel(ch):
             warn("Invalid channel given to get_target_temp()")
             return False
-        if not _is_valid_target(cls._probe_target_valid, ch):
+        if not _is_valid_target(self._probe_target_valid, ch):
             return None
-        t = cls._probe_target_deg_c_value[ch]
+        t = self._probe_target_deg_c_value[ch]
         return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
 
-    @classmethod
-    def get_target_temps(cls) -> list:
+    def get_target_temps(self) -> list:
         """Return all target temperatures as list."""
-        return [cls.get_target_temp(ch)
-                for ch in range(len(cls._probe_target_deg_c_value))]
+        return [self.get_target_temp(ch)
+                for ch in range(len(self._probe_target_deg_c_value))]
 
-    @classmethod
-    def is_temp_valid(cls, ch: int) -> bool | None:
+    def is_temp_valid(self, ch: int) -> bool | None:
         """Return True if temperature is valid"""
         if not _is_valid_channel(ch):
             warn("Invalid channel given to is_temp_valid()")
             return None
-        return _is_valid_temp(cls._probe_deg_c_valid, ch)
+        return _is_valid_temp(self._probe_deg_c_valid, ch)
     
-    @classmethod
-    def _any_unacked_alarm(cls) -> bool:
-        for ch, active in enumerate(cls.alarms):
-            if active and not (cls._alarm_acked_flag & (1 << ch)):
+    def _any_unacked_alarm(self) -> bool:
+        for ch, active in enumerate(self.alarms):
+            if active and not (self._alarm_acked_flag & (1 << ch)):
                 return True
         return False
 
-    @classmethod
-    def any_alarm_active(cls):
+    def any_alarm_active(self):
         """Return True if an alarm is active."""
-        return any(cls.alarms)
+        return any(self.alarms)
     
-    @classmethod
-    def is_alarm_active(cls, ch: int) -> bool | None:
+    def is_alarm_active(self, ch: int) -> bool | None:
         """Return True if alarm of channel is active."""
         if not _is_valid_channel(ch):
             warn("Invalid channel given to is_alarm_active()")
             return None
-        return cls.alarms[ch]
+        return self.alarms[ch]
 
-    @classmethod
-    def is_alarm_confirmed(cls, ch: int) -> bool | None:
+    def is_alarm_confirmed(self, ch: int) -> bool | None:
         """Return True if alarm of channel is active and confirmed."""
         if not _is_valid_channel(ch):
             warn("Invalid channel given to is_alarm_confirmed()")
             return None
-        if not cls.alarms[ch]:
+        if not self.alarms[ch]:
             return False
-        return bool(cls._alarm_acked_flag & (1 << ch))
+        return bool(self._alarm_acked_flag & (1 << ch))
 
-    @classmethod
-    def confirm_alarm(cls, ch: int):
+    def confirm_alarm(self, ch: int):
+        info(f"[CTRL] Confirm alarm received with ch {ch}")
         if not _is_valid_channel(ch):
             return False
-        cls._alarm_acked_flag |= 1 << ch
+        self._alarm_acked_flag |= 1 << ch
         return True
 
-    @classmethod
-    def reset_alarms(cls):
+    def reset_alarms(self):
         """Reset all alarms."""
-        cls.alarms = [False] * hw_cfg.PROBE_CHANNELS
+        self._alarms = [False] * self._num_channels
 
-    @classmethod
-    def reset_alarm(cls, ch: int):
+    def reset_alarm(self, ch: int):
         """
         Reset alarm of given channel.
         Returns None in case of invalid channel.
@@ -229,38 +221,35 @@ class PitNodeCtrl:
         if not _is_valid_channel(ch):
             warn("Invalid channel given to reset_alarm()")
             return None
-        cls.alarms[ch] = False
+        self.alarms[ch] = False
 
-    @classmethod
-    def set_target_temp(cls, ch: int, temp: float | int) -> bool:
+    def set_target_temp(self, ch: int, temp: float | int) -> bool:
         """Return True if temperature was set successfully"""
         ch = int(ch)
-        if ch < 0 or ch >= len(cls._probe_target_deg_c_value):
+        if ch < 0 or ch >= len(self._probe_target_deg_c_value):
             return False
         
         if not isinstance(temp, (int, float)):
             return False
     
         if cfg.UNIT == "cel":
-            cls._probe_target_deg_c_value[ch] = temp
+            self._probe_target_deg_c_value[ch] = temp
         elif cfg.UNIT == "far":
-            cls._probe_target_deg_c_value[ch] = (temp - 32) * 5 / 9
+            self._probe_target_deg_c_value[ch] = (temp - 32) * 5 / 9
         else:
             return False
         
-        cls._probe_target_valid |= 1 << ch
+        self._probe_target_valid |= 1 << ch
         return True
 
-    @classmethod
-    def set_target_temps(cls, values: list[float | int]) -> list[bool]:
+    def set_target_temps(self, values: list[float | int]) -> list[bool]:
         """Sets all target temperatures."""
         status = []
         for ch, temp in enumerate(values):
-            status.append(cls.set_target_temp(ch, temp))
+            status.append(self.set_target_temp(ch, temp))
         return status
 
-    @classmethod
-    def increase_target_temp(cls, ch: int, step: int) -> bool:
+    def increase_target_temp(self, ch: int, step: int) -> bool:
         """
         Return True if target temperature was incremented successfully.
         Otherwise False.
@@ -273,15 +262,14 @@ class PitNodeCtrl:
             return False
         
         # Reset confirm alarm flag
-        cls._alarm_acked_flag &= ~(1 << ch)
+        self._alarm_acked_flag &= ~(1 << ch)
 
         step_c = step if cfg.UNIT == "cel" else step * 5 / 9
-        cls._probe_target_deg_c_value[ch] += step_c
-        cls._probe_target_valid |= 1 << ch
+        self._probe_target_deg_c_value[ch] += step_c
+        self._probe_target_valid |= 1 << ch
         return True
 
-    @classmethod
-    def decrease_target_temp(cls, ch: int, step: int) -> bool:
+    def decrease_target_temp(self, ch: int, step: int) -> bool:
         """
         Return True if target temperature was decremented successfully.
         Otherwise False.
@@ -294,131 +282,125 @@ class PitNodeCtrl:
             return False
         
         # Reset confirm alarm flag
-        cls._alarm_acked_flag &= ~(1 << ch)
+        self._alarm_acked_flag &= ~(1 << ch)
 
         step_c = step if cfg.UNIT == "cel" else step * 5 / 9
-        cls._probe_target_deg_c_value[ch] -= step_c
-        cls._probe_target_valid |= 1 << ch
+        self._probe_target_deg_c_value[ch] -= step_c
+        self._probe_target_valid |= 1 << ch
         return True
 
-    @classmethod
-    def _eval_temp(cls, ch: int) -> None:
+    def _eval_temp(self, ch: int) -> None:
         """Evaluates if target temperature is reached and sets alarm."""
         # measurement invalid → no alarm
-        if not _is_valid_temp(cls._probe_deg_c_valid, ch):
-            cls.alarms[ch] = False
-            cls._alarm_acked_flag &= ~(1 << ch)
+        if not _is_valid_temp(self._probe_deg_c_valid, ch):
+            self.alarms[ch] = False
+            self._alarm_acked_flag &= ~(1 << ch)
             return
         # no target configured → no alarm
-        if not _is_valid_target(cls._probe_target_valid, ch):
-            cls.alarms[ch] = False
-            cls._alarm_acked_flag &= ~(1 << ch)
+        if not _is_valid_target(self._probe_target_valid, ch):
+            self.alarms[ch] = False
+            self._alarm_acked_flag &= ~(1 << ch)
             return
-        temp_meas = cls._probe_deg_c_value[ch]
-        temp_target = cls._probe_target_deg_c_value[ch]
+        temp_meas = self._probe_deg_c_value[ch]
+        temp_target = self._probe_target_deg_c_value[ch]
         if temp_meas >= temp_target:
-            cls.alarms[ch] = True
+            self.alarms[ch] = True
             # do NOT touch ack here
         else:
-            cls.alarms[ch] = False
-            cls._alarm_acked_flag &= ~(1 << ch)
+            self.alarms[ch] = False
+            self._alarm_acked_flag &= ~(1 << ch)
 
-    @classmethod
-    async def _alarm_task(cls):
+    async def _alarm_task(self):
         try:
-            while cls._running:
-                if cls._any_unacked_alarm():
-                    await cls.trigger_buzzer()
+            while self._running:
+                if self._any_unacked_alarm():
+                    await self.trigger_buzzer()
                 else:
-                    if cls.hw and cls.hw._buzzer:
-                        cls.hw.buzzer_off()  # ensure silence
+                    if self.hw and self.hw._buzzer:
+                        self.hw.buzzer_off()  # ensure silence
                 await asyncio.sleep(0.5)
         finally:
             info("Controller alarm task stopped")
-            if cls.hw and cls.hw._buzzer:
-                cls.hw.buzzer_off()
+            if self.hw and self.hw._buzzer:
+                self.hw.buzzer_off()
 
-    @classmethod
-    async def trigger_buzzer(cls):
-        assert cls.hw is not None, "HW not set"
-        cls.hw.buzzer_on()
+    async def trigger_buzzer(self):
+        assert self.hw is not None, "HW not set"
+        self.hw.buzzer_on()
         await asyncio.sleep(0.3)
-        cls.hw.buzzer_off()
+        self.hw.buzzer_off()
 
-    @classmethod
-    def read_tc_deg(cls):
-        assert cls.hw is not None, error("HW not set")
+    def read_tc_deg(self):
+        assert self.hw is not None, error("HW not set")
 
         try:
-            raw = cls.hw.read_tc()
+            raw = self.hw.read_tc()
         except Exception:
-            cls._tc_probe_state = ProbeState.INVALID
-            cls._tc_deg_c_valid = 0
-            return cls._tc_deg_c_value
+            self._tc_probe_state = ProbeState.INVALID
+            self._tc_deg_c_valid = 0
+            return self._tc_deg_c_value
 
-        filt = cls._tc_filter 
+        filt = self._tc_filter 
         value = filt.update(raw)
 
-        cls._tc_probe_state = filt.state
+        self._tc_probe_state = filt.state
 
         if filt.state == ProbeState.OK and value is not None:
-            cls._tc_deg_c_value = value
-            cls._tc_deg_c_valid = 1
+            self._tc_deg_c_value = value
+            self._tc_deg_c_valid = 1
         else:
-            cls._tc_deg_c_valid = 0
+            self._tc_deg_c_valid = 0
 
-        return cls._tc_deg_c_value
+        return self._tc_deg_c_value
 
 
-    @classmethod
-    def read_res_ohm(cls):
-        assert cls.hw is not None, error("HW not set")
-        cls._probe_resistance_valid = 0
+    def read_res_ohm(self):
+        assert self.hw is not None, error("HW not set")
+        self._probe_resistance_valid = 0
 
         res = [None] * hw_cfg.PROBE_CHANNELS
-        raw_values = cls.hw.read_raw()
+        raw_values = self.hw.read_raw()
 
         for ch, (raw, r_series_ohm) in enumerate(
             zip(raw_values, hw_cfg.R_SERIES_OHM)
         ):
             r_ntc_ohm, state = eval_resistance_raw(raw, r_series_ohm)
-            cls._probe_state[ch] = state
+            self._probe_state[ch] = state
 
             if state is not ProbeState.OK:
                 continue
             res[ch] = r_ntc_ohm
-            cls._probe_state[ch] = ProbeState.OK
-            cls._probe_resistance_value[ch] = r_ntc_ohm #type:ignore
-            cls._probe_resistance_valid |= 1 << ch
+            self._probe_state[ch] = ProbeState.OK
+            self._probe_resistance_value[ch] = r_ntc_ohm #type:ignore
+            self._probe_resistance_valid |= 1 << ch
         return res
 
-    @classmethod
-    async def _measure_loop(cls):
+    async def _measure_loop(self):
         period_ms = 500
         next_t = ticks_ms()
         try:
-            while cls._running:
+            while self._running:
                 now = ticks_ms()
                 late = ticks_diff(now, next_t)
                 if late > 50:   # z. B. 50 ms Toleranz
                     if cfg.DEV_MODE is True:
                         warn(f"Measurement late: {late} ms")
                 try:
-                    cls._probe_deg_c_valid = 0
-                    resistances = cls.read_res_ohm()
-                    cls.read_tc_deg()
+                    self._probe_deg_c_valid = 0
+                    resistances = self.read_res_ohm()
+                    self.read_tc_deg()
                     for ch, res in enumerate(resistances):
-                        probe = cls._probes[ch]
+                        probe = self._probes[ch]
                         if probe is None:
                             continue
 
-                        if cls._probe_state[ch] != ProbeState.OK:
-                            cls._probe_deg_c_valid &= ~(1 << ch)
+                        if self._probe_state[ch] != ProbeState.OK:
+                            self._probe_deg_c_valid &= ~(1 << ch)
                             continue
 
-                        cls._probe_deg_c_value[ch] = probe.resistance_to_deg_c(res) #type:ignore
-                        cls._probe_deg_c_valid |= 1 << ch
-                        cls._eval_temp(ch)
+                        self._probe_deg_c_value[ch] = probe.resistance_to_deg_c(res) #type:ignore
+                        self._probe_deg_c_valid |= 1 << ch
+                        self._eval_temp(ch)
                 except Exception as e:
                     error(f"Error during measurement: {e}")
                 

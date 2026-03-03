@@ -5,10 +5,9 @@
 
 import pitnode.driver.hw_config as hw_cfg
 import config as cfg
-from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.core.probe import NtcProbe
 
-def setup_probes():
+def setup_probes(ctrl):
     if len(cfg.PROBES) != hw_cfg.PROBE_CHANNELS:
         raise ValueError("Probe count does not match hardware channels")
 
@@ -22,5 +21,5 @@ def setup_probes():
             cfg.R_NTC_0_OHM[ch],
         )
 
-        if not Ctrl.register_probe(ch, probe):
+        if not ctrl.register_probe(ch, probe):
             raise ValueError(f"Probe registration failed for channel {ch}")

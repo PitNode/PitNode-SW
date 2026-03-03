@@ -39,13 +39,18 @@ class App:
                  "_wifi_was_connected",
                  "_running"
                  )
-    def __init__(self):
+    def __init__(self, hw=None):
         self._status = SystemStatus()
-        self._controller = PitNodeCtrl
-        self._wifi = WiFiWrapper(self._status, self._controller.hw.wlan()) # type: ignore
+        self._controller = PitNodeCtrl(hw=hw)
+        self._wifi = WiFiWrapper(self._status,
+                                 self._controller.hw.wlan(), # type:ignore
+                                 self._controller.hw.wlan_cfg_path, # type:ignore
+                                 self._controller.hw.unique_id() # type:ignore
+                                 ) 
         self._wifi_view = WifiView(self._wifi)
         self._presenter = PitNodePresenter(self._status,
-                                          self._wifi_view
+                                          self._wifi_view,
+                                          self._controller
                                           )
         self._webserver = WebServer(self._presenter)
         
@@ -101,7 +106,7 @@ class App:
             info("No WiFi connection established. Webserver will not be started.")
 
     async def start(self):
-        setup_probes()
+        setup_probes(self._controller)
         await self._controller.start_pitnode_ctrl()
         self._wifi_task = asyncio.create_task(
             self._wait_for_gui_and_start_wifi()
