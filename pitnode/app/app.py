@@ -26,32 +26,24 @@ def mem(tag):
         print(tag, "mem stats not available on CPython")
 
 class App:
-    __slots__ = ("_status",
-                 "_controller",
-                 "_wifi",
-                 "_config",
-                 "_wifi_view",
-                 "_presenter",
-                 "_webserver",
-                 "_gui_ready",
-                 "_wifi_task",
-                 "_mem_task",
-                 "_wifi_was_connected",
-                 "_running"
-                 )
     def __init__(self, hw=None):
         self._status = SystemStatus()
         self._controller = PitNodeCtrl(hw=hw)
-        self._wifi = WiFiWrapper(self._status,
-                                 self._controller.hw.wlan(), # type:ignore
-                                 self._controller.hw.wlan_cfg_path, # type:ignore
-                                 self._controller.hw.unique_id() # type:ignore
-                                 ) 
+        self._wifi = WiFiWrapper(
+            self._status,
+            self._controller.hw.wlan(), # type:ignore
+            self._controller.hw.wlan_cfg_path, # type:ignore
+            self._controller.hw.unique_id() # type:ignore
+            ) 
+        
         self._wifi_view = WifiView(self._wifi)
-        self._presenter = PitNodePresenter(self._status,
-                                          self._wifi_view,
-                                          self._controller
-                                          )
+        
+        self._presenter = PitNodePresenter(
+            self._status,
+            self._wifi_view,
+            self._controller
+            )
+        
         self._webserver = WebServer(self._presenter)
         
         self._gui_ready = asyncio.Event()
