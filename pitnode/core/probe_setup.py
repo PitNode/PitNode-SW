@@ -3,12 +3,12 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import pitnode.driver.hw_config as hw_cfg
+#import pitnode.driver.hw_config as hw_cfg
 import config as cfg
 from pitnode.core.probe import NtcProbe
 
 def setup_probes(ctrl):
-    if len(cfg.PROBES) != hw_cfg.PROBE_CHANNELS:
+    if len(cfg.PROBES) != ctrl.num_probe_channels:
         raise ValueError("Probe count does not match hardware channels")
 
     for ch, p in enumerate(cfg.PROBES):

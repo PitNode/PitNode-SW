@@ -71,7 +71,7 @@ class PitNodePresenter:
         return self._status
     
     def get_num_probe_channels(self):
-        return self._ctrl.num_channels
+        return self._ctrl.num_probe_channels
 
     def set_gui_ready_callback(self, cb):
         self._on_gui_ready = cb
@@ -157,5 +157,3 @@ class PitNodePresenter:
     
     def is_alarm_confirmed(self, ch):
         return self._ctrl.is_alarm_confirmed(ch)
-
-

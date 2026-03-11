@@ -4,7 +4,7 @@
 # https://www.pitnode.de
 
 import asyncio
-from pitnode.ui.port import start_ui
+from pitnode.ui.port import start_app
 
 if __name__ == "__main__":
-    asyncio.run(start_ui())
+    asyncio.run(start_app())

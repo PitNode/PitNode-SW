@@ -10,6 +10,7 @@ except ImportError:
     def const(x):
         return x
 
+BASE_PATH = "."
 
 # Init HW
 GPIO_PINS = (

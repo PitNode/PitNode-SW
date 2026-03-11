@@ -31,7 +31,7 @@ import config as cfg
 from pitnode.core.probe import ProbeState, OPEN_THRESHOLD, VALID_THRESHOLD, NtcProbe
 from pitnode.core.sensor_eval import eval_resistance_raw
 from pitnode.core.tc_filter import TcFilter
-import pitnode.driver.hw_config as hw_cfg
+#import pitnode.driver.hw_config as hw_cfg
 from pitnode.log.log import info, warn, error
 
 
@@ -39,31 +39,36 @@ class PitNodeCtrl:
     """Class for controlling the PitNode"""
     def __init__(self, hw=None) -> None:
         self._hw = hw
+        self._probe_channels = hw.hw_cfg.PROBE_CHANNELS #type:ignore
         self._running = False
         self._tasks = []
-        self._probes = [None] * hw_cfg.PROBE_CHANNELS # type: list[NtcProbe | None]
-        self._probe_raw_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probes = [None] * self._probe_channels
+        self._probe_raw_value = [0] * self._probe_channels
         self._probe_raw_valid = 0
-        self._probe_mv_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probe_mv_value = [0] * self._probe_channels
         self._probe_mv_valid = 0
-        self._probe_deg_c_value = [0.0] * hw_cfg.PROBE_CHANNELS
+        self._probe_deg_c_value = [0.0] * self._probe_channels
         self._probe_deg_c_valid = 0
-        self._probe_resistance_value = [0] * hw_cfg.PROBE_CHANNELS
+        self._probe_resistance_value = [0] * self._probe_channels
         self._probe_resistance_valid = 0
-        self._probe_state = [ProbeState.OPEN] * hw_cfg.PROBE_CHANNELS
+        self._probe_state = [ProbeState.OPEN] * self._probe_channels
         self._tc_raw = 0
         self._tc_deg_c_value = None
         self._tc_deg_c_valid = 0
         self._tc_probe_state = ProbeState.OPEN
         self._tc_open_cnt = 0
         self._tc_valid_cnt = 0
-        self._probe_target_deg_c_value = [50.0] * hw_cfg.PROBE_CHANNELS
+        self._probe_target_deg_c_value = [50.0] * self._probe_channels
         self._probe_target_valid = 0b111
-        self._alarms = [False] * hw_cfg.PROBE_CHANNELS
+        self._alarms = [False] * self._probe_channels
         self._buzzer = False
         self._alarm_acked_flag = 0
-        self._num_channels = hw_cfg.PROBE_CHANNELS
-    
+        self._num_channels = self._probe_channels
+
+    @property
+    def num_probe_channels(self):
+        return self._probe_channels
+
     @property
     def hw(self):
         return self._hw
@@ -71,11 +76,7 @@ class PitNodeCtrl:
     @property
     def alarms(self):
         return self._alarms
-    
-    @property
-    def num_channels(self):
-        return self._num_channels
-    
+     
     async def start_pitnode_ctrl(self):
         if self._running:
             return
@@ -104,7 +105,7 @@ class PitNodeCtrl:
         Register a probe to HW channel.
         Returns True if register was successful. Otherwise returns False.
         """
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to register_probe")
             return False
 
@@ -128,7 +129,7 @@ class PitNodeCtrl:
         Return None if tempeature is not valid.
         """
 
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to get_temp()")
             return False
         if not _is_valid_temp(self._probe_deg_c_valid, ch):
@@ -156,7 +157,7 @@ class PitNodeCtrl:
         Return False if ch invalid.
         Return None if target temp invalid
         """
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to get_target_temp()")
             return False
         if not _is_valid_target(self._probe_target_valid, ch):
@@ -171,7 +172,7 @@ class PitNodeCtrl:
 
     def is_temp_valid(self, ch: int) -> bool | None:
         """Return True if temperature is valid"""
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to is_temp_valid()")
             return None
         return _is_valid_temp(self._probe_deg_c_valid, ch)
@@ -188,14 +189,14 @@ class PitNodeCtrl:
     
     def is_alarm_active(self, ch: int) -> bool | None:
         """Return True if alarm of channel is active."""
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to is_alarm_active()")
             return None
         return self.alarms[ch]
 
     def is_alarm_confirmed(self, ch: int) -> bool | None:
         """Return True if alarm of channel is active and confirmed."""
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to is_alarm_confirmed()")
             return None
         if not self.alarms[ch]:
@@ -204,7 +205,7 @@ class PitNodeCtrl:
 
     def confirm_alarm(self, ch: int):
         info(f"[CTRL] Confirm alarm received with ch {ch}")
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             return False
         self._alarm_acked_flag |= 1 << ch
         return True
@@ -218,7 +219,7 @@ class PitNodeCtrl:
         Reset alarm of given channel.
         Returns None in case of invalid channel.
         """
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to reset_alarm()")
             return None
         self.alarms[ch] = False
@@ -254,7 +255,7 @@ class PitNodeCtrl:
         Return True if target temperature was incremented successfully.
         Otherwise False.
         """
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to increase_target_temp()")
             return False
         if not isinstance(step, int):
@@ -274,7 +275,7 @@ class PitNodeCtrl:
         Return True if target temperature was decremented successfully.
         Otherwise False.
         """
-        if not _is_valid_channel(ch):
+        if not _is_valid_channel(ch, self._probe_channels):
             warn("Invalid channel given to decrease_target_temp()")
             return False
         if not isinstance(step, int):
@@ -358,13 +359,13 @@ class PitNodeCtrl:
         assert self.hw is not None, error("HW not set")
         self._probe_resistance_valid = 0
 
-        res = [None] * hw_cfg.PROBE_CHANNELS
+        res = [None] * self._probe_channels
         raw_values = self.hw.read_raw()
 
         for ch, (raw, r_series_ohm) in enumerate(
-            zip(raw_values, hw_cfg.R_SERIES_OHM)
+            zip(raw_values, self.hw.hw_cfg.R_SERIES_OHM) #type:ignore
         ):
-            r_ntc_ohm, state = eval_resistance_raw(raw, r_series_ohm)
+            r_ntc_ohm, state = eval_resistance_raw(raw, r_series_ohm, self.hw.hw_cfg)
             self._probe_state[ch] = state
 
             if state is not ProbeState.OK:
@@ -412,9 +413,9 @@ class PitNodeCtrl:
             info("Measurement task stopped")
 
 # Validation helper functions
-def _is_valid_channel(ch:int) -> bool:
+def _is_valid_channel(ch:int, num_channels) -> bool:
     """Return True if the channel is valid."""
-    return isinstance(ch, int) and 0 <= ch < hw_cfg.PROBE_CHANNELS
+    return isinstance(ch, int) and 0 <= ch < num_channels
 
 def _is_valid_probe(probe) -> bool:
     """Return True if the probe is valid."""
