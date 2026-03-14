@@ -27,18 +27,17 @@ except ImportError:
     async def sleep_ms(ms: int):
         await asyncio.sleep(ms / 1000)
 
-import config as cfg
 from pitnode.core.probe import ProbeState, OPEN_THRESHOLD, VALID_THRESHOLD, NtcProbe
 from pitnode.core.sensor_eval import eval_resistance_raw
 from pitnode.core.tc_filter import TcFilter
-#import pitnode.driver.hw_config as hw_cfg
 from pitnode.log.log import info, warn, error
 
 
 class PitNodeCtrl:
     """Class for controlling the PitNode"""
-    def __init__(self, hw=None) -> None:
+    def __init__(self, hw=None, cfg=None) -> None:
         self._hw = hw
+        self._cfg = cfg
         self._probe_channels = hw.hw_cfg.PROBE_CHANNELS #type:ignore
         self._running = False
         self._tasks = []
@@ -66,8 +65,12 @@ class PitNodeCtrl:
         self._num_channels = self._probe_channels
 
     @property
-    def num_probe_channels(self):
+    def num_probe_ch(self):
         return self._probe_channels
+
+    @property
+    def cfg(self):
+        return self._cfg
 
     @property
     def hw(self):
@@ -120,7 +123,7 @@ class PitNodeCtrl:
         if not self._tc_deg_c_valid or self._tc_deg_c_value is None:
             return None
         t = self._tc_deg_c_value
-        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
+        return t if self._cfg.UNIT == "cel" else (t * 9 / 5 + 32) #type:ignore
     
     def get_temp(self, ch: int) -> None | bool | float:
         """
@@ -136,12 +139,12 @@ class PitNodeCtrl:
             warn("Temperature is not valid")
             return None
         t = self._probe_deg_c_value[ch]
-        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
+        return t if self._cfg.UNIT == "cel" else (t * 9 / 5 + 32) #type:ignore
 
     def get_temps(self) -> list:
         """Return all temperatures as list."""
         temps = self._probe_deg_c_value
-        return temps if cfg.UNIT == "cel" else ([(t * 9 / 5 + 32) for t in temps])
+        return temps if self._cfg.UNIT == "cel" else ([(t * 9 / 5 + 32) for t in temps]) #type:ignore
 
     def get_probe_states(self) -> list:
         """Return all probe states as list."""
@@ -163,7 +166,7 @@ class PitNodeCtrl:
         if not _is_valid_target(self._probe_target_valid, ch):
             return None
         t = self._probe_target_deg_c_value[ch]
-        return t if cfg.UNIT == "cel" else (t * 9 / 5 + 32)
+        return t if self._cfg.UNIT == "cel" else (t * 9 / 5 + 32) #type:ignore
 
     def get_target_temps(self) -> list:
         """Return all target temperatures as list."""
@@ -233,9 +236,9 @@ class PitNodeCtrl:
         if not isinstance(temp, (int, float)):
             return False
     
-        if cfg.UNIT == "cel":
+        if self._cfg.UNIT == "cel": #type:ignore
             self._probe_target_deg_c_value[ch] = temp
-        elif cfg.UNIT == "far":
+        elif self._cfg.UNIT == "far": #type:ignore
             self._probe_target_deg_c_value[ch] = (temp - 32) * 5 / 9
         else:
             return False
@@ -265,7 +268,7 @@ class PitNodeCtrl:
         # Reset confirm alarm flag
         self._alarm_acked_flag &= ~(1 << ch)
 
-        step_c = step if cfg.UNIT == "cel" else step * 5 / 9
+        step_c = step if self._cfg.UNIT == "cel" else step * 5 / 9 #type:ignore
         self._probe_target_deg_c_value[ch] += step_c
         self._probe_target_valid |= 1 << ch
         return True
@@ -285,7 +288,7 @@ class PitNodeCtrl:
         # Reset confirm alarm flag
         self._alarm_acked_flag &= ~(1 << ch)
 
-        step_c = step if cfg.UNIT == "cel" else step * 5 / 9
+        step_c = step if self._cfg.UNIT == "cel" else step * 5 / 9 #type:ignore
         self._probe_target_deg_c_value[ch] -= step_c
         self._probe_target_valid |= 1 << ch
         return True
@@ -384,7 +387,7 @@ class PitNodeCtrl:
                 now = ticks_ms()
                 late = ticks_diff(now, next_t)
                 if late > 50:   # z. B. 50 ms Toleranz
-                    if cfg.DEV_MODE is True:
+                    if self._cfg.DEV_MODE is True: #type:ignore
                         warn(f"Measurement late: {late} ms")
                 try:
                     self._probe_deg_c_valid = 0

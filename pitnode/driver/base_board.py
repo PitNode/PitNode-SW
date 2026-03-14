@@ -3,13 +3,12 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-# base_board.py
 
 class BaseBoard:
     """Base class for all PitNode hardware boards."""
 
-    def __init__(self, hw_cfg) -> None:
-        self._hw_cfg = hw_cfg
+    def __init__(self) -> None:
+        self._hw_cfg = None
 
     # --- configuration access ---
     @property

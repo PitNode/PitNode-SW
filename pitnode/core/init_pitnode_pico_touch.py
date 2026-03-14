@@ -3,8 +3,6 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+from pitnode.driver.rpi_pico import RPiPico
 
-from pitnode.ui.port import start
-
-if __name__ == "__main__":
-    start()
+hw = RPiPico()

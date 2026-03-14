@@ -4,20 +4,32 @@
 # https://www.pitnode.de
 
 import asyncio
+import sys
+
 from pitnode.app.app import App
+from pitnode.core import config_parser
+from pitnode.log.log import info, warn, error
 
+def start():
+    if sys.implementation.name == "micropython":
+        info("Running on MicroPython")
+        cfg = config_parser.Config()
+        if cfg.BOARD == "PITNODEPICOTOUCH": # type: ignore
+            asyncio.run(start_pitnode_pico_touch_app(cfg))
+    else:
+        info("Running on CPython (Linux/dev)")
+        cfg = config_parser.Config("config_linux.txt")
+        asyncio.run(start_local(cfg))    
 
-async def start_app():
-    import pitnode.driver.hw_config as hw_cfg
+async def start_pitnode_pico_touch_app(cfg):
+    from pitnode.core.init_pitnode_pico_touch import hw
     from pitnode.ui.impl_ugui import start_gui
-    from pitnode.driver.rpi_pico import RPiPico
     
-    hw = RPiPico(hw_cfg)  # type: ignore
-    app = App(hw=hw)
+    app = App(cfg=cfg, hw=hw)
     await app.start()
     await start_gui(app)
 
-async def start_local():
+async def start_local(cfg):
     import pitnode.driver.hw_config as hw_cfg
     from pitnode.driver.mock_hw import MockHw
     

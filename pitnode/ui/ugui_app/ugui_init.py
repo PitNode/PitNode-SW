@@ -7,7 +7,6 @@ import gui.fonts.roboto_thin48_temp as font_lg_temp
 import gui.fonts.roboto_thin26_red as font_md_red
 import gui.fonts.roboto_thin18_ext as font_keyboard
 import gui.fonts.icons as icons
-#from gui.core.colors import *
 from gui.core.tgui import ssd
 
 from pitnode.ui.ugui_app.colors import *

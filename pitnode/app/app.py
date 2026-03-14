@@ -3,17 +3,16 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-#from machine import reset
+
 import asyncio
+import gc
 
 from pitnode.core.controller import PitNodeCtrl
 from pitnode.core.presenter import PitNodePresenter
 from pitnode.wifi.wifi import WiFiWrapper
 from pitnode.web.webserver import WebServer
-import config as cfg
 from pitnode.log.log import error, info
 from pitnode.core.probe_setup import setup_probes
-import gc
 
 
 def mem(tag):
@@ -26,9 +25,10 @@ def mem(tag):
         print(tag, "mem stats not available on CPython")
 
 class App:
-    def __init__(self, hw=None):
+    def __init__(self, hw=None, cfg=None):
+        self._cfg = cfg
         self._status = SystemStatus()
-        self._controller = PitNodeCtrl(hw=hw)
+        self._controller = PitNodeCtrl(hw=hw, cfg=cfg)
         self._wifi = WiFiWrapper(
             self._status,
             self._controller.hw.wlan(), # type:ignore
@@ -104,7 +104,7 @@ class App:
             self._wait_for_gui_and_start_wifi()
         )
         #await self.webserver.start_webserver()
-        if cfg.DEV_MODE:
+        if self._cfg.DEV_MODE: #type:ignore
             self._mem_task = asyncio.create_task(self._mem_info())
 
     async def stop(self):

@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Philipp Geisseler / PitNode project
+# https://github.com/pitnode/pitnode
+# https://www.pitnode.de
+
+# PitNode Hardware Config
+
+# Probe configuration
+PROBE_CHANNELS = 3
+K_CHANNELS = 1
+
+PROBE_PINS = 28,27,26
+R_SERIES_OHM = 47000,47000,47000
+
+# LCD Pins
+PIN_LCD_DC = 3
+PIN_LCD_RST = 2
+PIN_LCD_CS = 1
+PIN_LCD_CLK = 6
+PIN_LCD_MOSI = 7
+PIN_LCD_MISO = 4
+
+# Touch Pins
+PIN_TOUCH_CS = 13
+PIN_TOUCH_CLK = 10
+PIN_TOUCH_MOSI = 11
+PIN_TOUCH_MISO = 12
+
+# Shared SPI2
+PIN_SPI2_CLK = 22
+PIN_SPI2_MOSI = 18
+PIN_SPI2_MISO = 20
+
+# K-tpe probe pins
+PIN_K_PROBE_CS = 21
+
+# Buzzer
+PIN_BUZZER = 16
+
+# ADC
+V_ADC_REF_MV = 3300
+ADC_MIN_MV = 20
+R_MAX_OHM = 1000000
+
+# SPI Speeds
+LCD_BAUD = 30000000
+TOUCH_BAUD = 2500000
+
+# LCD Geometry
+LCD_WIDTH = 320
+LCD_HEIGHT = 240

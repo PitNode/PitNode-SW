@@ -3,8 +3,8 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+
 from pitnode.core.probe import ProbeState
-#import pitnode.driver.hw_config as hw_cfg
 
 def eval_resistance_raw(raw, r_series, hw_cfg):
     mv = (raw * hw_cfg.V_ADC_REF_MV) // 65535

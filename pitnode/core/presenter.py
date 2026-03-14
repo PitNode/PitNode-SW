@@ -7,6 +7,7 @@
 from pitnode.log.log import info, warn, error
 from config import UNIT
 
+
 class PitNodePresenter:
     def __init__(self, system_status, wifi_view, ctrl):
         self._on_gui_ready = None
@@ -71,7 +72,7 @@ class PitNodePresenter:
         return self._status
     
     def get_num_probe_channels(self):
-        return self._ctrl.num_probe_channels
+        return self._ctrl.num_probe_ch
 
     def set_gui_ready_callback(self, cb):
         self._on_gui_ready = cb

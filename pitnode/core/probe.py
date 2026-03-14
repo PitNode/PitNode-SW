@@ -3,11 +3,13 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+
 from math import log
 try:
     from micropython import const # type:ignore
 except ImportError:
     def const(x): return x
+
 
 OPEN_THRESHOLD = const(3)
 VALID_THRESHOLD = const(2)

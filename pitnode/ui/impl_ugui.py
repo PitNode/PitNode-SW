@@ -7,9 +7,6 @@ import gc
 
 import gui.touch_setup as touch_setup
 import pitnode.ui.ugui_app.screen_measure as screen_measure
-#import pitnode.ui.ugui_app.screen_wifi
-#import pitnode.ui.ugui_app.screen_config
-
 
 async def start_gui(app):
     gc.collect()

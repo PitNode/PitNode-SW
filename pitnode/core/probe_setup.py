@@ -3,22 +3,21 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-#import pitnode.driver.hw_config as hw_cfg
-import config as cfg
+
 from pitnode.core.probe import NtcProbe
 
 def setup_probes(ctrl):
-    if len(cfg.PROBES) != ctrl.num_probe_channels:
+    if len(ctrl.cfg.PROBES) != ctrl.num_probe_ch:
         raise ValueError("Probe count does not match hardware channels")
 
-    for ch, p in enumerate(cfg.PROBES):
+    for ch, p in enumerate(ctrl.cfg.PROBES):
         if p != "NTC":
             raise ValueError("Unsupported probe type")
 
         probe = NtcProbe(
-            cfg.T_NTC_0_MK[ch],
-            cfg.BETA_K[ch],
-            cfg.R_NTC_0_OHM[ch],
+            ctrl.cfg.T_NTC_0_MK[ch],
+            ctrl.cfg.BETA_K[ch],
+            ctrl.cfg.R_NTC_0_OHM[ch],
         )
 
         if not ctrl.register_probe(ch, probe):
