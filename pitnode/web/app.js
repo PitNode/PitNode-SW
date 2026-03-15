@@ -146,7 +146,7 @@ function updateBBQ() {
     return;
   }
 
-  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " °" + currentUnit;
+  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " " + currentUnit;
 }
 
 function updateAllUnits() {

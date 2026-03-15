@@ -12,12 +12,7 @@ import gc
 
 from pitnode.web.websocket import handle_websocket
 from pitnode.log.log import error, info
-from config import WEB_PORT, WEB_PORT_DEV, DEV_MODE
-
-if DEV_MODE:
-    port = WEB_PORT_DEV
-else:
-    port = WEB_PORT
+#from config import WEB_PORT, WEB_PORT_DEV, DEV_MODE
 
 WEB_ROOT = "pitnode/web"
 
@@ -38,7 +33,7 @@ class WebServer:
             self._server = await asyncio.start_server(
                 lambda r, w: http_handler(r, w, self.presenter),
                 "0.0.0.0",
-                port
+                self.presenter.get_cfg().WEB_PORT
             )
             info("[WEB] Webserver gestartet")
         except Exception as e:

@@ -3,8 +3,6 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import asyncio
-from pitnode.ui.port import start_local
+from pitnode.driver.mock_hw import MockHw
 
-if __name__ == "__main__":
-    asyncio.run(start_local())
+hw = MockHw()

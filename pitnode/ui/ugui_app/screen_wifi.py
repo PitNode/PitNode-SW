@@ -13,7 +13,7 @@ from gui.core.colors import *
 
 from pitnode.ui.ugui_app.ugui_init import wrt_icon, wrt_keyboard
 from pitnode.storage.secrets import save_password
-import config as cfg
+#import config as cfg
 from pitnode.log.log import error, info
 
 class WLANsetupScreen(Screen):
@@ -59,8 +59,11 @@ class WLANsetupScreen(Screen):
 
     def on_ok(self, _):
         Label(wrt_keyboard, 100, 10, text="Rebooting in 3 seconds...", fgcolor=WHITE, bgcolor=RED, bdcolor=False)
-        if not cfg.DEV_MODE:
-            save_password(self.lbltxt.value()[:-1])
+        if not self.presenter.get_cfg().DEV_MODE: #type:ignore
+            info(f"Save PW under {self.presenter.get_wifi_cfg_path()}") #type:ignore
+            save_password(self.lbltxt.value()[:-1],
+                          self.presenter.get_wifi_cfg_path(), #type:ignore
+                          self.presenter.get_hw_uid()) #type:ignore
         asyncio.create_task(self._delayed_reboot())
 
     async def _delayed_reboot(self):

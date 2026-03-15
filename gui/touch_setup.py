@@ -5,7 +5,7 @@
 
 import gc
 from drivers.ili93xx.ili9341_8bit import ILI9341 as SSD
-from pitnode.core.init_pitnode_pico_touch import hw
+from pitnode.driver.init_pitnode_pico_touch import hw
 
 gc.collect()  # Precaution before instantiating framebuf
 spi_lcd, pin_lcd_cs, pin_lcd_data, pin_lcd_rst, lcd_h, lcd_w = hw.spi_lcd

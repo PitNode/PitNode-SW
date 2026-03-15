@@ -19,7 +19,6 @@ try:
 except ImportError:
     import hashlib
 
-#from pitnode.core.controller import PitNodeCtrl as Ctrl
 from pitnode.log.log import error, info, warn
 
 def _path(filename, base_path=None):

@@ -5,7 +5,6 @@
 
 
 from pitnode.log.log import info, warn, error
-from config import UNIT
 
 
 class PitNodePresenter:
@@ -17,14 +16,15 @@ class PitNodePresenter:
         self._on_reboot = None
         self.websockets = []
         self._ctrl = ctrl
+        self._cfg = self._ctrl.cfg
         self._wifi_config_handler = None
         self._selected_ssid = None
         self._wifi_abort_handler = None
         self.unit = None
 
-        if UNIT == "cel":
+        if self._cfg.UNIT == "cel":
             self.unit = "°C"
-        elif UNIT == "far":
+        elif self._cfg.UNIT == "far":
             self.unit = "°F"
         else:
             error("Not a valid unit in config file")
@@ -52,6 +52,16 @@ class PitNodePresenter:
             self._on_reboot()
 
     # API
+    
+    def get_cfg(self):
+        return self._cfg
+
+    def get_wifi_cfg_path(self):
+        return self._ctrl.hw.wlan_cfg_path
+    
+    def get_hw_uid(self):
+        return self._ctrl.hw.uid
+
     def get_unit(self):
         return self.unit
 

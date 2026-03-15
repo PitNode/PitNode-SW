@@ -3,30 +3,37 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import config as cfg
-
 INFO  = 1
 WARN  = 2
 ERROR = 3
 
-_level = ERROR
+class Logger:
+    def __init__(self):
+        self._level = ERROR
+        self._dev_mode = False
 
-def set_level(level):
-    global _level
-    _level = level
+    def set_mode(self, dev_mode):
+        self._dev_mode = dev_mode
 
-def _log(level, tag, msg):
-    if not cfg.DEV_MODE and level < _level:
-        return
-    print("[%s] %s" % (tag, msg))
+    def set_level(self, level):
+        global _level
+        _level = level
 
-def info(msg):
-    _log(INFO, "I", msg)
+    def _log(self, level, tag, msg):
+        if not self._dev_mode and level < self._level:
+            return
+        print("[%s] %s" % (tag, msg))
 
-def warn(msg):
-    _log(WARN, "W", msg)
+    def info(self, msg):
+        self._log(INFO, "I", msg)
+    
+    def warn(self, msg):
+        self._log(WARN, "W", msg)
 
-def error(msg):
-    _log(ERROR, "E", msg)
+    def error(self, msg):
+        self._log(ERROR, "E", msg)
 
-set_level(_level)
+logger = Logger()
+info = logger.info
+error = logger.error
+warn = logger.warn

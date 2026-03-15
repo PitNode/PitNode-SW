@@ -6,13 +6,14 @@
 #import network
 import gc
 import asyncio
-from config import ENABLE_WIFI
+#from config import ENABLE_WIFI
 from pitnode.storage.secrets import load_password, load_ssid
 from pitnode.log.log import error, info, warn
 
 
 class WiFiWrapper:
-    def __init__(self, system_status, wlan, cfg_path, hw_uid):
+    def __init__(self, cfg, system_status, wlan, cfg_path, hw_uid):
+        self._cfg = cfg
         self._lock = asyncio.Lock()
         self._system_status = system_status
         self._wlan = wlan
@@ -85,7 +86,7 @@ class WiFiWrapper:
         return False
 
     async def wifi_init(self):
-        if not ENABLE_WIFI:
+        if not self._cfg.ENABLE_WIFI:
             info("WLAN deaktiviert")
             return False
         ssid = load_ssid(self._cfg_path)

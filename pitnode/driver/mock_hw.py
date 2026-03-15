@@ -7,27 +7,28 @@
 import pitnode.storage.secrets as secret
 from pitnode.log.log import error, info
 from pitnode.driver.base_board import BaseBoard
+from pitnode.core.config_parser import HWConfig
 
 class MockHw(BaseBoard):
-    def __init__(self, hw_cfg) -> None:
-        super().__init__(hw_cfg)
-
+    def __init__(self) -> None:
+        super().__init__()
+        self._hw_cfg = HWConfig(path="pitnode/hw_config/pitnode_pico_touch_config.txt")
+        self._uid = b"pitnode-dev-uid"
         self._buzzer = DummyBuzzer()
         self._wlan = MockWiFiDriver()
         self._temp_mock = TempMock(self._hw_cfg)
-        self.wlan_cfg_path  = self._join(self._hw_cfg.BASE_PATH, "pitnode/tests")
+        self.wlan_cfg_path  = ("pitnode/tests")
 
     @property
     def num_probe_channels(self):
-        return self._hw_cfg.PROBE_CHANNELS
+        return self._hw_cfg.PROBE_CHANNELS # type: ignore
 
-    def _join(self, base, rel):
-        if base.endswith("/"):
-            return base + rel
-        return base + "/" + rel
+    @property
+    def hw_cfg(self):
+        return self._hw_cfg
 
     def set_mock_pw(self):
-        secret.save_password("TestPw", self.wlan_cfg_path, self.unique_id())
+        secret.save_password("TestPw", self.wlan_cfg_path, self.uid)
 
     def wlan(self):
         return self._wlan
@@ -47,8 +48,9 @@ class MockHw(BaseBoard):
     def reboot(self):
         pass
     
-    def unique_id(self):
-        return b"pitnode-dev-uid"
+    @property
+    def uid(self):
+        return self._uid
     
 class DummyBuzzer():
     pass

@@ -9,15 +9,11 @@ import time
 
 import touch_setup as touch_setup
 from gui.core.tgui import Screen, ssd
-#from gui.core.writer import CWriter
-#from gui.widgets import Label, CloseButton
-#from gui.core.colors import *
 
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
 from pitnode.ui.ugui_app.channel_ui import ChannelUI, BBQchUI
 from pitnode.ui.ugui_app.menu_ui import Menu
-import config as cfg
 from pitnode.core.probe import ProbeState
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.colors import *

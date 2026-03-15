@@ -36,35 +36,32 @@ for p in parts:
 echo "--- Copy root files ---"
 $MPREMOTE cp main.py :
 $MPREMOTE cp touch_setup.py :
-$MPREMOTE cp config.py :
+$MPREMOTE cp config.txt :
 $MPREMOTE cp bg_img.bin :
 
 # ---------- pitnode ----------
-echo "--- Create pitnode directories ---"
-find pitnode -type d -name "__pycache__" -prune -o -type d -print | while read d; do
+echo "--- Create pitnode directories (excluding pycache and tests) ---"
+find pitnode \( -name "__pycache__" -o -name "tests" \) -prune -o -type d -print | while read d; do
     mp_mkdir "$d"
 done
 
-
-echo "--- Copy pitnode files ---"
-find pitnode -type d -name "__pycache__" -prune -o -type f -name "*.py" -print | while read f; do
+echo "--- Copy pitnode files (.py and .txt, excluding tests) ---"
+find pitnode \( -name "__pycache__" -o -name "tests" \) -prune -o -type f \( -name "*.py" -o -name "*.txt" \) -print | while read f; do
     $MPREMOTE cp "$f" ":$f"
 done
 
 # ---------- web assets ----------
-echo "--- Create web asset directories ---"
-find pitnode/web \
-  -type d -print | while read d; do
+find pitnode/web -type d -name "__pycache__" -prune -o -type d -print | while read d; do
     mp_mkdir "$d"
 done
 
 echo "--- Copy web assets ---"
-find pitnode/web \
-  -type f \( \
+find pitnode/web -type d -name "__pycache__" -prune -o -type f \( \
     -name "*.html" -o \
     -name "*.css"  -o \
     -name "*.js"   -o \
     -name "*.json" -o \
+    -name "*.png" -o \
     -name "*.ico" \
   \) -print | while read f; do
     $MPREMOTE cp "$f" ":$f"

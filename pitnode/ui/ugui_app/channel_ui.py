@@ -9,8 +9,6 @@ from gui.core.tgui import Screen, Window
 from gui.widgets import Label, Button, Pad
 from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
-from config import UNIT
-#from gui.core.colors import *
 from pitnode.ui.ugui_app.colors import *
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.widgets.led_bar import LEDBAR

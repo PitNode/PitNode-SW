@@ -3,6 +3,6 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-from pitnode.driver.rpi_pico import RPiPico
+from pitnode.driver.pico_touch import PicoTouch
 
-hw = RPiPico()
+hw = PicoTouch()

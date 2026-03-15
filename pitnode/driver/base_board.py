@@ -37,5 +37,5 @@ class BaseBoard:
     def reboot(self):
         raise NotImplementedError
 
-    def unique_id(self):
+    def uid(self):
         raise NotImplementedError

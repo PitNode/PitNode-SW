@@ -12,7 +12,7 @@ from gui.widgets import Label, Button, CloseButton
 
 from pitnode.ui.ugui_app.ugui_init import wrt_keyboard, wrt_md_red
 from pitnode.storage.secrets import save_password, save_ssid
-import config as cfg
+#import config as cfg
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.screen_wifi import WLANsetupScreen
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
@@ -133,8 +133,9 @@ class WlanConfig(Screen):
             raise
 
     def _on_select(self, btn, *_):
-        if not cfg.DEV_MODE:
-            save_ssid(btn.text)
+        if not self.presenter.get_cfg().DEV_MODE: #type:ignore
+            info(f"Save SSID under {self.presenter.get_wifi_cfg_path()}") #type:ignore
+            save_ssid(btn.text, self.presenter.get_wifi_cfg_path()) #type:ignore
         self.presenter.set_selected_ssid(btn.text) #type:ignore
         WLANsetupScreen.set_presenter(self.presenter)
         Screen.change(WLANsetupScreen)

@@ -30,10 +30,11 @@ class App:
         self._status = SystemStatus()
         self._controller = PitNodeCtrl(hw=hw, cfg=cfg)
         self._wifi = WiFiWrapper(
+            self._cfg,
             self._status,
             self._controller.hw.wlan(), # type:ignore
             self._controller.hw.wlan_cfg_path, # type:ignore
-            self._controller.hw.unique_id() # type:ignore
+            self._controller.hw.uid # type:ignore
             ) 
         
         self._wifi_view = WifiView(self._wifi)

@@ -12,9 +12,10 @@ from pitnode.core.config_parser import HWConfig
 #for pin in hw_cfg.GPIO_PINS:
 #   Pin(pin, Pin.IN, Pin.PULL_DOWN)
 
-class RPiPico(BaseBoard):
+class PicoTouch(BaseBoard):
     def __init__(self) -> None:
         self._hw_cfg = HWConfig(path="/pitnode/hw_config/pitnode_pico_touch_config.txt")
+        self._uid = unique_id()
         
         Pin(17, Pin.OUT, value=0)
         
@@ -64,7 +65,11 @@ class RPiPico(BaseBoard):
         self._wlan = network.WLAN(network.STA_IF)
         self._wlan.active(False)
         
-        self.wlan_cfg_path  = "."
+        self.wlan_cfg_path  = "/"
+
+    @property
+    def uid(self):
+        return self._uid
 
     @property
     def num_probe_channels(self):
