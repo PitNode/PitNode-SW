@@ -58,7 +58,7 @@ Prerequisites:
 1. Flash MicroPython to the Pico 2 W. Detailed instructions can be found on [micropython page](https://micropython.org/download/RPI_PICO2_W/)
 1. Clone this repository into you workspace  
 `git clone https://github.com/PitNode/PitNode-SW.git`
-1. Configure your NTC probes in config.py
+1. Configure your NTC probes in config.txt
 1. Make sure you eventually deleted all files from the Pico.
 1. Upload the software using the `deploy.sh` script  
 The script will upload all needed data to your Pico by using mpremote and auto detect the HW. Make sure only one Pico is connected to avoid unintended uploads.
