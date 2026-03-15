@@ -16,7 +16,7 @@ class RPiPico(BaseBoard):
     def __init__(self) -> None:
         self._hw_cfg = HWConfig(path="/pitnode/hw_config/pitnode_pico_touch_config.txt")
         
-        Pin(16, Pin.OUT, value=0)
+        Pin(17, Pin.OUT, value=0)
         
         self._adc_list = [ADC(pin) for pin in self._hw_cfg.PROBE_PINS] # type: ignore
 
