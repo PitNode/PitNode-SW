@@ -364,6 +364,7 @@ class PitNodeCtrl:
 
         res = [None] * self._probe_channels
         raw_values = self.hw.read_raw()
+        info(f"[CTRL] Raw values are {raw_values}")
 
         for ch, (raw, r_series_ohm) in enumerate(
             zip(raw_values, self.hw.hw_cfg.R_SERIES_OHM) #type:ignore
@@ -377,6 +378,7 @@ class PitNodeCtrl:
             self._probe_state[ch] = ProbeState.OK
             self._probe_resistance_value[ch] = r_ntc_ohm #type:ignore
             self._probe_resistance_valid |= 1 << ch
+        info(f"[CTRL] Resistances are {res}")
         return res
 
     async def _measure_loop(self):

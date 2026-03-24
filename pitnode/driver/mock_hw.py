@@ -124,7 +124,7 @@ class TempMock:
 
         mv = self._temp_to_mv(temp_c)
 
-        raw = int((mv * 65535) / self._hw_cfg.V_ADC_REF_MV)
+        raw = int((mv * 65535) / self._hw_cfg.V_REF_MV)
 
         # drei Kanäle identisch
         return [raw, raw, raw]

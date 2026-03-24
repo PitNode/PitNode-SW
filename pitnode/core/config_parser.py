@@ -10,12 +10,22 @@ class ConfigError(Exception):
 
 class Config:
     SCHEMA = {
-        # key : (type, required, default)
         "BOARD": (str, True, None), 
         "UNIT": (str, True, None),
-        "T_NTC_0_MK": (list, True, None),
-        "BETA_K": (list, True, None),
-        "R_NTC_0_OHM": (list, True, None),
+
+        # NEU
+        "PROBE_MODEL": (str, False, "BETA"),
+
+        # Beta Mode
+        "T_NTC_0_MK": (list, False, None),
+        "BETA_K": (list, False, None),
+        "R_NTC_0_OHM": (list, False, None),
+
+        # Steinhart-Hart Mode
+        "SH_A": (list, False, None),
+        "SH_B": (list, False, None),
+        "SH_C": (list, False, None),
+
         "PROBES": (list, True, None),
         "ENABLE_WIFI": (bool, False, True),
         "DEV_MODE": (bool, False, False),
@@ -28,6 +38,13 @@ class Config:
         self._load()
         self._apply_defaults()
         self._validate()
+
+    @property
+    def num_channels(self):
+        if self.PROBE_MODEL == "BETA":
+            return len(self.T_NTC_0_MK)
+        else:
+            return len(self.SH_A)
 
     # -----------------------------------------------------
     # LOAD
@@ -81,7 +98,6 @@ class Config:
 
     def _parse_scalar(self, value):
 
-        # bool
         if value == "True":
             return True
         if value == "False":
@@ -93,7 +109,12 @@ class Config:
         except ValueError:
             pass
 
-        # str
+        # float
+        try:
+            return float(value)
+        except ValueError:
+            pass
+
         return value
 
     # -----------------------------------------------------
@@ -117,12 +138,40 @@ class Config:
 
     def _validate(self):
 
-        # Channel consistency
-        if len(self.T_NTC_0_MK) != len(self.BETA_K):  # type:ignore
-            raise ConfigError("Config error. Mismatch between length.")
+        model = getattr(self, "PROBE_MODEL", "BETA")
 
-        if len(self.T_NTC_0_MK) != len(self.R_NTC_0_OHM):  # type:ignore
-            raise ConfigError("Config error. Mismatch between length.")
+        if model == "BETA":
+
+            if not all([
+                self.T_NTC_0_MK,
+                self.BETA_K,
+                self.R_NTC_0_OHM
+            ]):
+                raise ConfigError("Missing Beta parameters")
+
+            if len(self.T_NTC_0_MK) != len(self.BETA_K):
+                raise ConfigError("Mismatch length")
+
+            if len(self.T_NTC_0_MK) != len(self.R_NTC_0_OHM):
+                raise ConfigError("Mismatch length")
+
+        elif model == "SH":
+
+            if not all([
+                self.SH_A,
+                self.SH_B,
+                self.SH_C
+            ]):
+                raise ConfigError("Missing Steinhart-Hart parameters")
+
+            if len(self.SH_A) != len(self.SH_B):
+                raise ConfigError("Mismatch length")
+
+            if len(self.SH_A) != len(self.SH_C):
+                raise ConfigError("Mismatch length")
+
+        else:
+            raise ConfigError(f"Unknown PROBE_MODEL: {model}")
 
 
 class HWConfig:
@@ -159,8 +208,9 @@ class HWConfig:
         "PIN_BUZZER": (int, True, None),
 
         # --- ADC ---
-        "V_ADC_REF_MV": (int, True, None),
-        "ADC_MIN_MV": (int, False, 20),
+        "V_REF_MV": (int, True, None),
+        "ADC_MIN_RAW": (int, False, 100),
+        "ADC_MAX_RAW": (int, False, 65000),
         "R_MAX_OHM": (int, False, 1_000_000),
 
         # --- SPI Speed ---
@@ -243,7 +293,8 @@ class HWConfig:
     def _postprocess(self):
 
         # Derived ADC max
-        self.ADC_MAX_MV = self.V_ADC_REF_MV - 20 #type:ignore
+        #self.ADC_MAX_MV = self.V_ADC_REF_MV - 20 #type:ignore
+        pass
 
     # -----------------------------------------------------
     # VALIDATION
@@ -280,7 +331,7 @@ class HWConfig:
             raise ConfigError("Duplicate GPIO pin detected")
 
         # ADC limits
-        if not (0 < self.ADC_MIN_MV < self.ADC_MAX_MV < self.V_ADC_REF_MV): #type:ignore
+        if not (0 < self.ADC_MIN_RAW < self.ADC_MAX_RAW): #type:ignore
             raise ConfigError("Invalid ADC limits")
 
         # SPI sanity

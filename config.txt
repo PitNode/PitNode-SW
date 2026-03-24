@@ -9,10 +9,18 @@ BOARD = PITNODE_PICO_TOUCH
 # Unit for temperature "cel" or "far"
 UNIT = cel
 
-# Probe parameters
+# Probe model to be used
+PROBE_MODEL = BETA
+
+# Probe parameters for BETA
 T_NTC_0_MK = 298150, 298150, 298150
 BETA_K = 3977, 3977, 3977
 R_NTC_0_OHM = 100000, 100000, 100000
+
+# Probe parameters for Steinhart-Hart
+SH_A = 1.40e-3, 1.40e-3, 1.40e-3
+SH_B = 2.37e-4, 2.37e-4, 2.37e-4
+SH_C = 9.90e-8, 9.90e-8, 9.90e-8
 
 # Probe to ADC channel assignment
 PROBES = NTC, NTC, NTC
@@ -20,6 +28,6 @@ PROBES = NTC, NTC, NTC
 ENABLE_WIFI = True
 
 # Flag is only for development
-DEV_MODE = False
+DEV_MODE = True
 
 WEB_PORT = 80
