@@ -3,16 +3,19 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+from pitnode.ui.impl_ugui import start_gui
+from pitnode.log.log import logger, info, warn, error
 import asyncio
 import sys
-
-from pitnode.app.app import App
 from pitnode.core import config_parser
-from pitnode.log.log import logger, info, warn, error
 
 def start():
     if sys.implementation.name == "micropython":
+        from micropython import mem_info
+        mem_info()
+        info("port.py start()")
         cfg = config_parser.Config()
+        mem_info()
         logger.set_mode(cfg.DEV_MODE) # type: ignore
         info("Running on MicroPython")
         if cfg.BOARD == "PITNODEPICOTOUCH": # type: ignore
@@ -24,14 +27,18 @@ def start():
         asyncio.run(start_local(cfg)) 
 
 async def start_pitnode_pico_touch_app(cfg):
+    from pitnode.app.app import App
     from pitnode.driver.init_pitnode_pico_touch import hw
-    from pitnode.ui.impl_ugui import start_gui
-    
+    from micropython import mem_info
+    #mem_info()
     app = App(cfg=cfg, hw=hw)
+    #mem_info()
     await app.start()
+    #mem_info()
     await start_gui(app)
 
 async def start_local(cfg):
+    from pitnode.app.app import App
     from pitnode.driver.init_pitnode_mock import hw
     hw.set_mock_pw() # type: ignore
     app = App(cfg=cfg, hw=hw)

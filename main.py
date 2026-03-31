@@ -3,7 +3,6 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-
 from pitnode.ui.port import start
 
 if __name__ == "__main__":

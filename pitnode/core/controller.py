@@ -30,6 +30,7 @@ except ImportError:
 from pitnode.core.probe import ProbeState, OPEN_THRESHOLD, VALID_THRESHOLD, NtcProbe
 from pitnode.core.sensor_eval import eval_resistance_raw
 from pitnode.core.tc_filter import TcFilter
+from pitnode.core.calibration import CalibrationWizard
 from pitnode.log.log import info, warn, error
 
 
@@ -364,7 +365,6 @@ class PitNodeCtrl:
 
         res = [None] * self._probe_channels
         raw_values = self.hw.read_raw()
-        info(f"[CTRL] Raw values are {raw_values}")
 
         for ch, (raw, r_series_ohm) in enumerate(
             zip(raw_values, self.hw.hw_cfg.R_SERIES_OHM) #type:ignore
@@ -378,7 +378,6 @@ class PitNodeCtrl:
             self._probe_state[ch] = ProbeState.OK
             self._probe_resistance_value[ch] = r_ntc_ohm #type:ignore
             self._probe_resistance_valid |= 1 << ch
-        info(f"[CTRL] Resistances are {res}")
         return res
 
     async def _measure_loop(self):
@@ -416,6 +415,18 @@ class PitNodeCtrl:
                 )
         finally:
             info("Measurement task stopped")
+
+    def start_calibration(self, unit):
+        self._cal_wiz = CalibrationWizard(self._num_channels, unit)
+        state, instruction = self._cal_wiz.start()
+        return state, instruction
+    
+    def cal_confirm(self, ch_to_cal):
+        state, instruction  = self._cal_wiz.confirm(ch_to_cal, self.read_res_ohm()) # type: ignore
+        return state, instruction
+
+    def cal_close(self):
+        self._cal_wiz = None
 
 # Validation helper functions
 def _is_valid_channel(ch:int, num_channels) -> bool:

@@ -19,3 +19,4 @@ spi_touch, pin_touch_cs = hw.spi_touch
 tpad = XPT2046(spi_touch, pin_touch_cs, ssd)
 tpad.init(240, 320, 336, 223, 3786, 3856, True, False, False)
 display = Display(ssd, tpad)
+gc.collect()

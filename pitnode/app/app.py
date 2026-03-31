@@ -7,12 +7,7 @@
 import asyncio
 import gc
 
-from pitnode.core.controller import PitNodeCtrl
-from pitnode.core.presenter import PitNodePresenter
-from pitnode.wifi.wifi import WiFiWrapper
-from pitnode.web.webserver import WebServer
 from pitnode.log.log import error, info
-from pitnode.core.probe_setup import setup_probes
 
 
 def mem(tag):
@@ -26,6 +21,16 @@ def mem(tag):
 
 class App:
     def __init__(self, hw=None, cfg=None):
+        from micropython import mem_info
+        mem_info()
+        from pitnode.core.controller import PitNodeCtrl
+        mem_info()
+        from pitnode.core.presenter import PitNodePresenter
+        mem_info()
+        from pitnode.wifi.wifi import WiFiWrapper
+        mem_info()
+        from pitnode.web.webserver import WebServer
+        mem_info()
         self._cfg = cfg
         self._status = SystemStatus()
         self._controller = PitNodeCtrl(hw=hw, cfg=cfg)
@@ -99,6 +104,7 @@ class App:
             info("No WiFi connection established. Webserver will not be started.")
 
     async def start(self):
+        from pitnode.core.probe_setup import setup_probes
         setup_probes(self._controller)
         await self._controller.start_pitnode_ctrl()
         self._wifi_task = asyncio.create_task(
@@ -128,6 +134,7 @@ class App:
     async def _mem_info(self):
         while True:
             mem("Current mem")
+            #mem_info()
             await asyncio.sleep(5)
 
 class WifiView:
@@ -142,6 +149,9 @@ class WifiView:
     
     def get_rssi(self):
         return self._wifi.rssi()
+    
+    def get_connected_ssid(self):
+        return self._wifi.ssid()
 
 class WiFiStatus:
     __slots__ = ("connected", "ip", "active", "config")

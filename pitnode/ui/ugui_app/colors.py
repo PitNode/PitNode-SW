@@ -11,7 +11,7 @@ CH_2_RGB = [98, 255, 98]
 CH_3_RGB = [65, 65, 255]
 
 DEF_BG             = SSD.rgb(18, 18, 20)      # #121214
-TEXT_MAIN          = SSD.rgb(235, 235, 235)   # fast weiß
+TEXT_MAIN          = SSD.rgb(220, 220, 220)   # fast weiß
 #TEXT_DIM           = SSD.rgb(120, 120, 125)
 CH1_COL            = SSD.rgb(CH_1_RGB[0], CH_1_RGB[1], CH_1_RGB[2])
 CH2_COL            = SSD.rgb(CH_2_RGB[0], CH_2_RGB[1], CH_2_RGB[2])
@@ -23,7 +23,7 @@ DYNAMIC_PULSE_1    = SSD.rgb(235, 235, 235)
 DYNAMIC_PULSE_2    = SSD.rgb(235, 235, 235)
 DYNAMIC_PULSE_3    = SSD.rgb(235, 235, 235)
 
-DIVIDER_1          = SSD.rgb(50, 50, 55)
+DIVIDER_1          = SSD.rgb(60, 60, 65)
 DIVIDER_2          = SSD.rgb(30, 30, 35)
 
 color_map[BG] = DEF_BG

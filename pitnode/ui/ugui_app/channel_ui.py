@@ -118,6 +118,7 @@ class BBQchUI:
             col,
             "BBQ: ",
             justify=Label.LEFT,
+            fgcolor=ACCENT_GRILL
         )
 
         # BBQ Measurement
@@ -127,6 +128,7 @@ class BBQchUI:
             lbl_bbq.mcol,
             60,
             justify=Label.LEFT,
+            fgcolor=ACCENT_GRILL
         )
         self.temp_label = lbl_bbq_meas
 
@@ -136,6 +138,7 @@ class BBQchUI:
             row,
             lbl_bbq_meas.mcol,
             self.presenter.unit,
+            fgcolor=ACCENT_GRILL
         )
         return self
 

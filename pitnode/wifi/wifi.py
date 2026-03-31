@@ -3,10 +3,9 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-#import network
 import gc
 import asyncio
-#from config import ENABLE_WIFI
+
 from pitnode.storage.secrets import load_password, load_ssid
 from pitnode.log.log import error, info, warn
 
@@ -35,6 +34,12 @@ class WiFiWrapper:
     def rssi(self):
         if self._system_status.wifi.connected:
             return self._wlan.status('rssi') #type:ignore
+        else:
+            return None
+        
+    def ssid(self):
+        if self._system_status.wifi.connected:
+            return self._wlan.config('ssid') #type:ignore
         else:
             return None
 

@@ -12,7 +12,6 @@ import gc
 
 from pitnode.web.websocket import handle_websocket
 from pitnode.log.log import error, info
-#from config import WEB_PORT, WEB_PORT_DEV, DEV_MODE
 
 WEB_ROOT = "pitnode/web"
 

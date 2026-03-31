@@ -10,7 +10,7 @@ BOARD = PITNODE_PICO_TOUCH
 UNIT = cel
 
 # Probe model to be used
-PROBE_MODEL = BETA
+PROBE_MODEL = SH
 
 # Probe parameters for BETA
 T_NTC_0_MK = 298150, 298150, 298150
@@ -18,9 +18,9 @@ BETA_K = 3977, 3977, 3977
 R_NTC_0_OHM = 100000, 100000, 100000
 
 # Probe parameters for Steinhart-Hart
-SH_A = 1.40e-3, 1.40e-3, 1.40e-3
-SH_B = 2.37e-4, 2.37e-4, 2.37e-4
-SH_C = 9.90e-8, 9.90e-8, 9.90e-8
+SH_A = 1.69901910e-03, 1.69901910e-03, 1.69901910e-03
+SH_B = 1.02632780e-04, 1.02632780e-04, 1.02632780e-04
+SH_C = 3.00641900e-07, 3.00641900e-07, 3.00641900e-07
 
 # Probe to ADC channel assignment
 PROBES = NTC, NTC, NTC

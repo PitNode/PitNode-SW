@@ -4,60 +4,69 @@
 # https://www.pitnode.de
 
 import pytest
-from pitnode.core.controller import PitNodeCtrl, NtcProbe
-from pitnode.driver.mock_hw import MockHw
-from pitnode.core import config_parser
-from pitnode.core.config_parser import Config
 from pitnode.core.calibration import CalibrationWizard
 
-T_NTC_0_MK = [298150, 298150, 298150] # in mK
-BETA_MK = [3977, 3977, 3977] # in mK
-R_NTC_0_MILOHM = [100000, 100000, 100000] # in Ohm
-R_SERIES_MILOHM = [47000, 47000, 47000] # in Ohm
-
-@pytest.fixture
-def setup_mock():
-    hw = MockHw()
-    cfg = config_parser.Config("config_linux.txt")
-    ctrl = PitNodeCtrl(hw, cfg)
-    for ch in range(ctrl.num_probe_ch):
-        probe = NtcProbe(T_NTC_0_MK[ch], BETA_MK[ch], R_NTC_0_MILOHM[ch], f"NTC Probe CH{ch}")
-        ctrl.register_probe(ch, probe)
-    return ctrl, cfg
 
 def test_calibration():
     #ctrl, cfg = setup_mock
     channel_idxs_to_cal = [0]
     num_probe_channels = 3
-    wiz = CalibrationWizard(channel_idxs_to_cal, num_probe_channels)
+    wiz = CalibrationWizard(num_probe_channels, "cel")
     state, instruction = wiz.start()
+    assert state == "CONFIG"
+    resistances = [None, None, None]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_COLD"
-    resistances = [200000, 0, 0]
-    state, inst = wiz.confirm(resistances)
+    resistances = [200000, None, 0]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_AMB"
     resistances = [100000, 0, 0]
-    state, inst = wiz.confirm(resistances)
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_HOT"
     resistances = [10000, 0, 0]
-    state, inst = wiz.confirm(resistances)
-    assert wiz._beta == [3415, None, None]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert wiz._beta == [5235, None, None]
 
     channel_idxs_to_cal = [0, 1, 2]
     num_probe_channels = 3
-    wiz = CalibrationWizard(channel_idxs_to_cal, num_probe_channels)
+    wiz = CalibrationWizard(num_probe_channels, "cel")
     state, instruction = wiz.start()
+    assert state == "CONFIG"
+    resistances = [None, None, None]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_COLD"
     resistances = [200000, 200000, 200000]
-    state, inst = wiz.confirm(resistances)
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_AMB"
     resistances = [100000, 100000, 100000]
-    state, inst = wiz.confirm(resistances)
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
     assert state == "WAIT_FOR_HOT"
     resistances = [10000, 10000, 10000]
-    state, inst = wiz.confirm(resistances)
-    assert wiz._beta == [3415, 3415, 3415]
-    assert wiz._ntc_coef == [3415, 3415, 3415]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert wiz._beta == [5235, 5235, 5235]
+    A, B, C = wiz._ntc_coef[0] #type:ignore
+    assert A == pytest.approx(0.0063358854061730235, rel=1)
+    assert B == pytest.approx(-0.0006346794085656607, rel=1)
+    assert C == pytest.approx(2.553057337749313e-06, rel=1)
 
-
-
-
+def test_calibration_neg():
+    #ctrl, cfg = setup_mock
+    channel_idxs_to_cal = [0]
+    num_probe_channels = 3
+    wiz = CalibrationWizard(num_probe_channels, "cel")
+    state, instruction = wiz.start()
+    assert state == "CONFIG"
+    resistances = [None, None, None]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert state == "WAIT_FOR_COLD"
+    resistances = [200000, 0, 0]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert state == "WAIT_FOR_AMB"
+    resistances = [200000, 0, 0]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert state == "WAIT_FOR_HOT"
+    resistances = [200000, 0, 0]
+    state, inst = wiz.confirm(channel_idxs_to_cal, resistances)
+    assert wiz._beta == [None, None, None]
+    assert wiz._ntc_coef[0] == None
+    assert inst == ['Error during calibration.']

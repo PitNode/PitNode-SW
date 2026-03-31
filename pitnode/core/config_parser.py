@@ -3,6 +3,7 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
+from math import log, exp
 
 class ConfigError(Exception):
     pass
@@ -39,6 +40,7 @@ class Config:
         self._apply_defaults()
         self._validate()
 
+    # API
     @property
     def num_channels(self):
         if self.PROBE_MODEL == "BETA":
@@ -46,10 +48,62 @@ class Config:
         else:
             return len(self.SH_A)
 
-    # -----------------------------------------------------
-    # LOAD
-    # -----------------------------------------------------
+    # Helper functions
+    def get_sh_coeff(self):
+        if self.PROBE_MODEL == "SH":
+            return self.SH_A, self.SH_B, self.SH_C
 
+        elif self.PROBE_MODEL == "BETA":
+            A_list, B_list, C_list = [], [], []
+
+            for ch in range(len(self.BETA_K)):
+                A, B, C = self.beta_to_sh(
+                    R0=self.R_NTC_0_OHM[ch],
+                    T0=self.T_NTC_0_MK[ch] / 1000,
+                    beta=self.BETA_K[ch]
+                )
+                A_list.append(A)
+                B_list.append(B)
+                C_list.append(C)
+
+            return A_list, B_list, C_list
+
+    def calc_steinhart(self, R1, T1, R2, T2, R3, T3):
+        L1, L2, L3 = log(R1), log(R2), log(R3)
+        Y1, Y2, Y3 = 1/T1, 1/T2, 1/T3
+
+        g2 = (Y2 - Y1) / (L2 - L1)
+        g3 = (Y3 - Y1) / (L3 - L1)
+
+        C = (g3 - g2) / (L3 - L2) / (L1 + L2 + L3)
+        B = g2 - C * (L1**2 + L1*L2 + L2**2)
+        A = Y1 - (B + C * L1**2) * L1
+        return A, B, C
+
+    def beta_to_sh(self, R0, T0, beta):
+        """
+        R0: Widerstand bei T0 (Ohm)
+        T0: Referenztemperatur (Kelvin)
+        beta: Beta-Wert (Kelvin)
+        """
+
+        # Zieltemperaturen
+        T1 = 273.15   # 0°C
+        T2 = T0       # z. B. 25°C
+        T3 = 373.15   # 100°C
+
+        # Widerstände berechnen
+        def R(T):
+            return R0 * exp(beta * (1/T - 1/T0))
+
+        R1 = R(T1)
+        R2 = R(T2)  # = R0
+        R3 = R(T3)
+
+        # Steinhart-Hart berechnen (deine korrigierte Version!)
+        return self.calc_steinhart(R1, T1, R2, T2, R3, T3)
+
+    # LOAD
     def _load(self):
         try:
             with open(self._config_path) as f:
@@ -76,12 +130,9 @@ class Config:
         except OSError:
             raise ConfigError("Config file not found")
 
-    # -----------------------------------------------------
     # VALUE PARSER
-    # -----------------------------------------------------
-
     def _parse_value(self, value, expected_type):
-
+        
         value = value.replace("_", "")
 
         if expected_type == list:
@@ -117,10 +168,7 @@ class Config:
 
         return value
 
-    # -----------------------------------------------------
     # DEFAULTS
-    # -----------------------------------------------------
-
     def _apply_defaults(self):
 
         for key, (_, required, default) in self.SCHEMA.items():
@@ -132,10 +180,7 @@ class Config:
 
                 setattr(self, key, default)
 
-    # -----------------------------------------------------
     # VALIDATION
-    # -----------------------------------------------------
-
     def _validate(self):
 
         model = getattr(self, "PROBE_MODEL", "BETA")
@@ -226,13 +271,9 @@ class HWConfig:
         self._hw_config_path = path
         self._load()
         self._apply_defaults()
-        self._postprocess()
         self._validate()
 
-    # -----------------------------------------------------
     # LOAD
-    # -----------------------------------------------------
-
     def _load(self):
 
         try:
@@ -258,10 +299,7 @@ class HWConfig:
         except OSError:
             raise ConfigError("Config file not found")
 
-    # -----------------------------------------------------
     # VALUE PARSER
-    # -----------------------------------------------------
-
     def _parse_value(self, value):
 
         value = value.replace("_", "")  # erlaubt 1_000_000
@@ -271,10 +309,7 @@ class HWConfig:
         else:
             return int(value)
 
-    # -----------------------------------------------------
     # DEFAULTS
-    # -----------------------------------------------------
-
     def _apply_defaults(self):
 
         for key, (_, required, default) in self.SCHEMA.items():
@@ -286,20 +321,7 @@ class HWConfig:
 
                 setattr(self, key, default)
 
-    # -----------------------------------------------------
-    # DERIVED VALUES
-    # -----------------------------------------------------
-
-    def _postprocess(self):
-
-        # Derived ADC max
-        #self.ADC_MAX_MV = self.V_ADC_REF_MV - 20 #type:ignore
-        pass
-
-    # -----------------------------------------------------
     # VALIDATION
-    # -----------------------------------------------------
-
     def _validate(self):
 
         # Channel consistency

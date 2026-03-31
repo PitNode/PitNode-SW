@@ -21,6 +21,7 @@ class PitNodePresenter:
         self._selected_ssid = None
         self._wifi_abort_handler = None
         self.unit = None
+        self._ch_to_cal = range(self.get_num_probe_channels()+1)
 
         if self._cfg.UNIT == "cel":
             self.unit = "°C"
@@ -75,8 +76,10 @@ class PitNodePresenter:
         return self._wifi_view.get_scan_result()
     
     def get_ip(self):
-        ip = self._status.wifi.ip
-        return ip
+        return self._status.wifi.ip
+    
+    def get_connected_ssid(self):
+        return self._wifi_view.get_connected_ssid()
 
     def get_status(self):
         return self._status
@@ -110,6 +113,9 @@ class PitNodePresenter:
 
     def get_temps(self):
         return self._ctrl.get_temps()
+    
+    def get_resistances(self):
+        return self._ctrl.read_res_ohm()
     
     def get_probe_states(self):
         return self._ctrl.get_probe_states()
@@ -168,3 +174,24 @@ class PitNodePresenter:
     
     def is_alarm_confirmed(self, ch):
         return self._ctrl.is_alarm_confirmed(ch)
+
+    def set_ch_to_cal(self, ch_list):
+        self._ch_to_cal = ch_list
+
+    def start_calibration(self):
+        _, instruction = self._ctrl.start_calibration(self.get_unit())
+        return instruction
+    
+    def cal_confirm(self):
+        state, instruction = self._ctrl.cal_confirm(self._ch_to_cal)
+
+        if state == "ERROR":
+            return ["Cal. not successful. Restart..."]
+
+        if state == "DONE":
+            return instruction
+
+        return instruction
+    
+    def cal_close(self):
+        self._ctrl.cal_close()

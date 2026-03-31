@@ -10,18 +10,51 @@ import time
 import touch_setup as touch_setup
 from gui.core.tgui import Screen, ssd
 
-from pitnode.ui.ugui_app.ugui_init import wrt_lg_temp, wrt_md_red, wrt_icon
+from pitnode.ui.ugui_app.ugui_init import wrt_keyboard, wrt_md_red, wrt_icon
 from pitnode.ui.ugui_app.ugui_init import UIPositions as Pos
 from pitnode.ui.ugui_app.channel_ui import ChannelUI, BBQchUI
 from pitnode.ui.ugui_app.menu_ui import Menu
 from pitnode.core.probe import ProbeState
 from pitnode.log.log import error, info
 from pitnode.ui.ugui_app.colors import *
+from gui.widgets import Label
 
 
 async def start_gui(presenter):
-    MeasureScreen.set_app(presenter)
-    Screen.change(MeasureScreen)
+    Splash.set_app(presenter)
+    Screen.change(Splash)
+    #MeasureScreen.set_app(presenter)
+    #Screen.change(MeasureScreen)
+
+class Splash(Screen):
+    presenter = None
+
+    @classmethod
+    def set_app(cls, presenter):
+        cls.presenter = presenter
+
+    def __init__(self):
+        super().__init__()
+        assert self.presenter is not None
+        Label(wrt_md_red, 200, 40, "PitNode is booting...")
+        self.reg_task(self.wait_splash())
+    
+    async def wait_splash(self):
+        await asyncio.sleep(4)
+        MeasureScreen.set_app(self.presenter)
+        Screen.change(MeasureScreen)
+
+    def after_open(self):
+        # Background image
+        fn = "pitnode.bin"
+        with open(fn, "rb") as f:
+            _ = f.read(4)
+            f.readinto(ssd.mvb)
+        
+        # Then draw layout overlaying
+        self.show(True)
+        #self.presenter.screen_attached() # type:ignore
+        gc.collect()
 
 class MeasureScreen(Screen):
     presenter = None
@@ -52,16 +85,17 @@ class MeasureScreen(Screen):
         
 
     def after_open(self):
-        gc.collect()
+        ssd.hline(4, Pos.header_height+4, Pos.lcd_width-2*Pos.margin, DIVIDER_1)
         # Background image
-        fn = "bg_img.bin"
-        with open(fn, "rb") as f:
-            _ = f.read(4)
-            f.readinto(ssd.mvb)
+        #fn = "bg_img.bin"
+        #with open(fn, "rb") as f:
+        #    _ = f.read(4)
+        #    f.readinto(ssd.mvb)
         
         # Then draw layout overlaying
-        self.show(True)
+        #self.show(True)
         self.presenter.screen_attached() # type:ignore
+        gc.collect()
 
     #--- LCD Layout ---#
     def _create_layout(self):

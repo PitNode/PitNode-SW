@@ -3,14 +3,16 @@
 # https://github.com/pitnode/pitnode
 # https://www.pitnode.de
 
-import gui.fonts.roboto_thin48_temp as font_lg_temp
+#import gui.fonts.roboto_thin48_temp as font_lg_temp
+import gui.fonts.roboto_regular36_temp as font_lg_temp
 import gui.fonts.roboto_thin26_red as font_md_red
-import gui.fonts.roboto_thin18_ext as font_keyboard
+#import gui.fonts.roboto_thin18_ext as font_keyboard
+import gui.fonts.roboto_regular20 as font_keyboard
 import gui.fonts.icons as icons
 from gui.core.tgui import ssd
 
+import gc
 from pitnode.ui.ugui_app.colors import *
-#from pitnode.driver.hw_config import LCD_WIDTH, LCD_HEIGHT, PROBE_CHANNELS
 from pitnode.driver.init_pitnode_pico_touch import hw
 
 wrt_lg_temp = CWriter(ssd, font_lg_temp, TEXT_MAIN, DEF_BG, False)
@@ -33,4 +35,5 @@ class UIPositions:
     ledbar_height = const(6)
     menu_row = 0 + margin
     menu_col = lcd_width - 80
-    
+
+gc.collect()

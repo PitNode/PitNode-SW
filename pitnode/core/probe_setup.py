@@ -10,14 +10,15 @@ def setup_probes(ctrl):
     if len(ctrl.cfg.PROBES) != ctrl.num_probe_ch:
         raise ValueError("Probe count does not match hardware channels")
 
+    A, B, C = ctrl.cfg.get_sh_coeff()
     for ch, p in enumerate(ctrl.cfg.PROBES):
         if p != "NTC":
             raise ValueError("Unsupported probe type")
 
         probe = NtcProbe(
-            ctrl.cfg.T_NTC_0_MK[ch],
-            ctrl.cfg.BETA_K[ch],
-            ctrl.cfg.R_NTC_0_OHM[ch],
+            A[ch],
+            B[ch],
+            C[ch],
         )
 
         if not ctrl.register_probe(ch, probe):
