@@ -34,9 +34,11 @@ class Config:
         "WEB_PORT_DEV": (int, False, 8080),
     }
 
-    def __init__(self, path="/config.txt"):
+    def __init__(self, path="/config.txt", cal_path="/calibration.txt"):
         self._config_path = path
+        self._cal_path = cal_path
         self._load()
+        self._load_calibration_override()
         self._apply_defaults()
         self._validate()
 
@@ -44,7 +46,7 @@ class Config:
     @property
     def num_channels(self):
         if self.PROBE_MODEL == "BETA":
-            return len(self.T_NTC_0_MK)
+            return len(self.T_NTC_0_MK) #type:ignore
         else:
             return len(self.SH_A)
 
@@ -56,11 +58,11 @@ class Config:
         elif self.PROBE_MODEL == "BETA":
             A_list, B_list, C_list = [], [], []
 
-            for ch in range(len(self.BETA_K)):
+            for ch in range(len(self.BETA_K)): #type:ignore
                 A, B, C = self.beta_to_sh(
-                    R0=self.R_NTC_0_OHM[ch],
-                    T0=self.T_NTC_0_MK[ch] / 1000,
-                    beta=self.BETA_K[ch]
+                    R0=self.R_NTC_0_OHM[ch], #type:ignore
+                    T0=self.T_NTC_0_MK[ch] / 1000, #type:ignore
+                    beta=self.BETA_K[ch] #type:ignore
                 )
                 A_list.append(A)
                 B_list.append(B)
@@ -130,6 +132,61 @@ class Config:
         except OSError:
             raise ConfigError("Config file not found")
 
+    def _load_calibration_override(self):
+        try:
+            with open(self._cal_path) as f:
+                cal_data = {}
+
+                for line in f:
+                    line = line.strip()
+
+                    if not line or line.startswith("#"):
+                        continue
+
+                    if "=" not in line:
+                        continue
+
+                    key, value = [x.strip() for x in line.split("=", 1)]
+
+                    if key not in ("SH_A", "SH_B", "SH_C"):
+                        continue
+
+                    cal_data[key] = self._parse_value(value, list)
+
+            # nur wenn zumindest teilweise vorhanden
+            if not cal_data:
+                return
+
+            # Basis holen (wichtig!)
+            base_A, base_B, base_C = self.get_sh_coeff() # type:ignore
+
+            # Merge vorbereiten
+            new_A = list(base_A)
+            new_B = list(base_B)
+            new_C = list(base_C)
+
+            # pro Kanal überschreiben wenn vorhanden
+            for i in range(len(new_A)):
+                try:
+                    if "SH_A" in cal_data and cal_data["SH_A"][i] is not None:
+                        new_A[i] = cal_data["SH_A"][i]
+                    if "SH_B" in cal_data and cal_data["SH_B"][i] is not None:
+                        new_B[i] = cal_data["SH_B"][i]
+                    if "SH_C" in cal_data and cal_data["SH_C"][i] is not None:
+                        new_C[i] = cal_data["SH_C"][i]
+                except IndexError:
+                    # calibration file kürzer → ignorieren
+                    pass
+
+            # übernehmen
+            self.SH_A = new_A
+            self.SH_B = new_B
+            self.SH_C = new_C
+            self.PROBE_MODEL = "SH"
+
+        except OSError:
+            pass
+
     # VALUE PARSER
     def _parse_value(self, value, expected_type):
         
@@ -153,6 +210,8 @@ class Config:
             return True
         if value == "False":
             return False
+        if value == "None":
+            return None
 
         # int
         try:
@@ -188,16 +247,16 @@ class Config:
         if model == "BETA":
 
             if not all([
-                self.T_NTC_0_MK,
-                self.BETA_K,
-                self.R_NTC_0_OHM
+                self.T_NTC_0_MK, #type:ignore
+                self.BETA_K, #type:ignore
+                self.R_NTC_0_OHM #type:ignore
             ]):
                 raise ConfigError("Missing Beta parameters")
 
-            if len(self.T_NTC_0_MK) != len(self.BETA_K):
+            if len(self.T_NTC_0_MK) != len(self.BETA_K): #type:ignore
                 raise ConfigError("Mismatch length")
 
-            if len(self.T_NTC_0_MK) != len(self.R_NTC_0_OHM):
+            if len(self.T_NTC_0_MK) != len(self.R_NTC_0_OHM): #type:ignore
                 raise ConfigError("Mismatch length")
 
         elif model == "SH":

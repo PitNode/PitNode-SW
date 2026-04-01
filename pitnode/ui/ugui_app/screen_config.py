@@ -286,7 +286,9 @@ class CalWizard(Screen):
             self._ch_to_cal_list[ch_idx] = None
             self._btns_list[ch_idx].bgcolor = DEF_BG
         
-        self.presenter.set_ch_to_cal(self._ch_to_cal_list) # type: ignore
+        self.presenter.set_ch_to_cal( #type:ignore
+            [ch for ch in self._ch_to_cal_list if ch is not None]
+        )
         btn.show()
 
     def _on_close(self, *_):

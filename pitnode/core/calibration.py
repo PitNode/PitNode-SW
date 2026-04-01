@@ -11,6 +11,7 @@ class CalibrationWizard:
     def __init__(self, num_probe_ch, unit):
         self._num_probe_ch = num_probe_ch
         self._unit = unit
+        self._cal_path = "/calibration.txt"
         self._state = "IDLE"
         self._instruction = ""
         self._ref_temps_K = [274.15, 298.15, 343.15]
@@ -68,7 +69,7 @@ class CalibrationWizard:
             self._state = "DONE"
             self._instruction = ["Calibration done!"]
             ok = self.save_calibration_config(
-                "/calibration.txt",
+                self._cal_path,
                 self._ntc_coef,
             )
 
@@ -78,65 +79,62 @@ class CalibrationWizard:
         return self._state, self._instruction
 
     def calculate(self):
+        # global check
         for res in self._resistance_results:
             if res is None:
                 self._state = "ERROR"
                 info("[CAL] Res. is None")
                 return
-            
+
+        # reset nur selektierte Channels
         for ch in self._channel_idxs:
-            if ch is not None:
-                self._beta[ch] = None
-                self._ntc_coef[ch] = None
-        
+            self._beta[ch] = None
+            self._ntc_coef[ch] = None
+
+        # --- strikt rechnen ---
         for ch in self._channel_idxs:
-            if ch is not None:
-                r0 = self._resistance_results[0][ch] #type:ignore
-                r1 = self._resistance_results[1][ch] #type:ignore
-                r2 = self._resistance_results[2][ch] #type:ignore
-                if (
-                    r0 is None or r1 is None or r2 is None or
-                    r0 <= 0 or r1 <= 0 or r2 <= 0
-                ):
-                    info("Invalid measurement")
-                    self._state = "ERROR"
-                    return
-                
-                if r0 <= 0 or r1 <= 0 or r2 <= 0:
-                    self._state = "ERROR"
-                    info("[CAL] Res. is neg.")
-                    return
+            r0 = self._resistance_results[0][ch] #type:ignore
+            r1 = self._resistance_results[1][ch] #type:ignore
+            r2 = self._resistance_results[2][ch] #type:ignore
 
-                if abs(r2 - r1) / r1 < 0.02:
-                    self._state = "ERROR"
-                    info("[CAL] Res. dif. to small")
-                    return
-                
-                beta_val = self._calc_beta(
-                    self._resistance_results[1][ch], #type:ignore
-                    self._ref_temps_K[1],
-                    self._resistance_results[2][ch], #type:ignore
-                    self._ref_temps_K[2],
-                )
+            if (
+                r0 is None or r1 is None or r2 is None or
+                r0 <= 0 or r1 <= 0 or r2 <= 0
+            ):
+                info(f"[CAL] CH{ch}: invalid measurement")
+                self._state = "ERROR"
+                return
 
-                coef_val = self._calc_steinhart(
-                    self._resistance_results[0][ch], #type:ignore
-                    self._ref_temps_K[0],
-                    self._resistance_results[1][ch], #type:ignore
-                    self._ref_temps_K[1],
-                    self._resistance_results[2][ch], #type:ignore
-                    self._ref_temps_K[2]
-                )
+            if abs(r2 - r1) / r1 < 0.02:
+                info(f"[CAL] CH{ch}: delta too small")
+                self._state = "ERROR"
+                return
 
-                if beta_val is None or coef_val is None:
-                    self._state = "ERROR"
-                    info("[CAL] Calc. coef. is None")
-                    self._beta[ch] = None
-                    self._ntc_coef[ch] = None
-                    return
-                
-                self._beta[ch] = beta_val #type:ignore
-                self._ntc_coef[ch] = coef_val
+            beta_val = self._calc_beta(
+                r1,
+                self._ref_temps_K[1],
+                r2,
+                self._ref_temps_K[2],
+            )
+
+            coef_val = self._calc_steinhart(
+                r0,
+                self._ref_temps_K[0],
+                r1,
+                self._ref_temps_K[1],
+                r2,
+                self._ref_temps_K[2]
+            )
+
+            if beta_val is None or coef_val is None:
+                info(f"[CAL] CH{ch}: calc failed")
+                self._state = "ERROR"
+                return
+
+            self._beta[ch] = beta_val #type:ignore
+            self._ntc_coef[ch] = coef_val
+
+        self._state = "DONE"
 
         info(f"[CAL] Calculated beta: {self._beta}")
         info(f"[CAL] Calculated Steinhart Coef.: {self._ntc_coef}")
@@ -211,29 +209,35 @@ class CalibrationWizard:
 
     def save_calibration_config(self, path, coef):
         try:
-            num_ch = len(coef)
+            def fmt_list(lst):
+                out = []
+                for v in lst:
+                    if v is None:
+                        out.append("None")
+                    else:
+                        out.append("{:.6e}".format(v))
+                return ", ".join(out)
 
-            A_vals = []
-            B_vals = []
-            C_vals = []
+            # A/B/C extrahieren
+            A = []
+            B = []
+            C = []
 
-            for ch in range(num_ch):
-                if coef[ch] is None:
-                    A=0
-                    B=0
-                    C=0
+            for coef in self._ntc_coef:
+                if coef is None:
+                    A.append(None)
+                    B.append(None)
+                    C.append(None)
                 else:
-                    A, B, C = coef[ch]
-
-                A_vals.append(f"{A:.8e}")
-                B_vals.append(f"{B:.8e}")
-                C_vals.append(f"{C:.8e}")
+                    a, b, c = coef #type:ignore
+                    A.append(a)
+                    B.append(b)
+                    C.append(c)
 
             with open(path, "w") as f:
-                f.write("# Steinhart-Hart calibration\n")
-                f.write("SH_A = " + ", ".join(A_vals) + "\n")
-                f.write("SH_B = " + ", ".join(B_vals) + "\n")
-                f.write("SH_C = " + ", ".join(C_vals) + "\n")
+                f.write("SH_A = " + fmt_list(A) + "\n")
+                f.write("SH_B = " + fmt_list(B) + "\n")
+                f.write("SH_C = " + fmt_list(C) + "\n")
 
             return True
 

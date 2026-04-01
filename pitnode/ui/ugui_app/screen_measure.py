@@ -36,14 +36,29 @@ class Splash(Screen):
     def __init__(self):
         super().__init__()
         assert self.presenter is not None
-        Label(wrt_md_red, 200, 40, "PitNode is booting...")
+        self.lbl = Label(wrt_keyboard, 200, 70, 200)
+        self.cnt = 0
         self.reg_task(self.wait_splash())
+        self.reg_task(self.animate_load(), on_change=True)
     
     async def wait_splash(self):
         await asyncio.sleep(4)
         MeasureScreen.set_app(self.presenter)
         Screen.change(MeasureScreen)
 
+    async def animate_load(self):
+        try:
+            base = "PitNode is booting"
+
+            while True:
+                dots = "." * self.cnt
+                self.lbl.value(base + dots)
+                self.cnt = (self.cnt + 1) % 4
+                await asyncio.sleep(0.3)
+
+        finally:
+            info("[SCR] Load animation stopped")
+        
     def after_open(self):
         # Background image
         fn = "pitnode.bin"
@@ -86,14 +101,6 @@ class MeasureScreen(Screen):
 
     def after_open(self):
         ssd.hline(4, Pos.header_height+4, Pos.lcd_width-2*Pos.margin, DIVIDER_1)
-        # Background image
-        #fn = "bg_img.bin"
-        #with open(fn, "rb") as f:
-        #    _ = f.read(4)
-        #    f.readinto(ssd.mvb)
-        
-        # Then draw layout overlaying
-        #self.show(True)
         self.presenter.screen_attached() # type:ignore
         gc.collect()
 

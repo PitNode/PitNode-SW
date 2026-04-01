@@ -1,0 +1,3 @@
+SH_A = None, 1.12345e-03, None
+SH_B = None, 2.23456e-04, None
+SH_C = None, 3.34567e-05, None

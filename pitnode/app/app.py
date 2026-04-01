@@ -21,16 +21,10 @@ def mem(tag):
 
 class App:
     def __init__(self, hw=None, cfg=None):
-        from micropython import mem_info
-        mem_info()
         from pitnode.core.controller import PitNodeCtrl
-        mem_info()
         from pitnode.core.presenter import PitNodePresenter
-        mem_info()
         from pitnode.wifi.wifi import WiFiWrapper
-        mem_info()
         from pitnode.web.webserver import WebServer
-        mem_info()
         self._cfg = cfg
         self._status = SystemStatus()
         self._controller = PitNodeCtrl(hw=hw, cfg=cfg)
