@@ -34,6 +34,7 @@ Status: **Active development**
 - Compatible with many NTC based probes  
   (RTD probes possible in theory, not yet implemented)
 - Additional channel for thermocouple probes type K for grill temperature monitoring
+- Calibration wizard to calibrate NTC probes
 - Temperature readout on a colored touch display
 - Target core temperatures can be set individually for each channel
 - Acoustic and optical alarm function when target core temperature is reached
