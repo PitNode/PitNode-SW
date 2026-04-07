@@ -11,16 +11,17 @@
   <title>PitNode</title>
 
   <!-- Pico.css -->
-  <link rel="stylesheet" href="/static/pico.min.css">
+  <!-- <link rel="stylesheet" href="/static/pico.min.css"> -->
+  <link rel="stylesheet" href="/static/bootstrap_custom.css">
   <link rel="stylesheet" href="/static/user.css">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
-<body>
+<body class="text-bg-dark">
 
 <!-- ================= HEADER ================= -->
-<header class="container">
+<header class="container text-bg-dark">
   <img src="/static/PitNode_Logo_Master_black_250_x_100.png" alt="PitNode" style="height:4rem; display:block; margin:auto;">
 </header>
 
@@ -33,28 +34,65 @@
 </nav>
 
 <!-- ================= MAIN ================= -->
-<main class="container">
-  <section>
-    <article>
-      <header class="bbq-title"></header>
-      <p>IST: <strong class="bbq-temp"></strong><span class="bbq-unit"></span></p>
-    </article>
-  </section>
+<main class="container text-bg-dark">
 
-  <section id="channels"></section>
+  <!-- BBQ -->
+  <div class="row g-3" id="bbq">
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card bg-dark-subtle h-100">
+        <div class="card-header bbq-title bg-primary"></div>
+        <div class="card-body text-center">
+          <h5>
+            BBQ Probe
+            <span class="badge text-bg-secondary">K-Type</span>
+          </h5>
 
+          <p class="display-5 mb-0">
+            <strong class="bbq-temp"></strong>
+            <span class="unit fs-6"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channels -->
+  <div class="row g-3" id="channels"></div>
+
+  <!-- Template -->
   <template id="channel-template">
-    <article>
-      <header class="ch-title"></header>
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card ch-card h-100">
+        <div class="card-header ch-title"></div>
 
-      <p>IST: <strong class="ch-temp"></strong><span class="unit"></span></p>
+        <div class="card-body text-center">
+          <h5>
+            Probe 1
+            <span class="badge text-bg-secondary">NTC</span>
+            <span class="badge text-bg-secondary">Steinhart-Hart</span>
+          </h5>
 
-      <p>
-        SOLL: <output class="ch-target"></output><output class="unit"></output>
-        <input type="range" min="0" max="150" class="ch-slider">
-        <button class="alarm-btn" disabled>Confirm alarm</button>
-      </p>
-    </article>
+          <p class="display-5 mb-0">
+            <strong class="ch-temp"></strong>
+            <span class="unit fs-6"></span>
+          </p>
+
+          <div class="mt-3">
+            <div class="mb-2">
+              SOLL:
+              <output class="ch-target"></output>
+              <span class="unit"></span>
+            </div>
+
+            <input type="range" min="0" max="150" class="form-range ch-slider">
+
+            <button type="button" class="btn btn-warning alarm-btn mt-2 w-100" disabled>
+              Confirm alarm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </template>
 
 </main>

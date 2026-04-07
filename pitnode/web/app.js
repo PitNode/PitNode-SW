@@ -36,6 +36,8 @@ function createChannel(ch) {
   const slider = clone.querySelector(".ch-slider");
   const alarmBtn = clone.querySelector(".alarm-btn");
 
+  title.style.backgroundColor = getChannelColor(ch);
+
   const r = getRange(currentUnit);
   slider.min = r.min;
   slider.max = r.max;
@@ -91,6 +93,19 @@ function createChannel(ch) {
     unitEls: units
   };
 }
+
+function getChannelColor(ch) {
+  const colors = [
+    "#0d6efd", // blau
+    "#198754", // grün
+    "#dc3545", // rot
+    "#ffc107", // gelb
+    "#6f42c1"  // lila
+  ];
+
+  return colors[ch % colors.length];
+}
+
 
 function setAlarmActive(ch, active) {
   const btn = channels[ch].alarmBtn;

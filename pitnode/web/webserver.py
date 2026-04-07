@@ -15,6 +15,7 @@ from pitnode.log.log import error, info
 
 WEB_ROOT = "pitnode/web"
 
+# Redirect to index.html in case of /
 def build_path(path):
     if path == "/":
         return WEB_ROOT + "/index.html"
@@ -53,6 +54,7 @@ class WebServer:
         except Exception as e:
             error(f"[WEB] Error while stopping webserver: {e}")
 
+# Handle http requests
 async def http_handler(reader, writer, presenter):
     request = await reader.readline()
     if not request:
@@ -67,7 +69,6 @@ async def http_handler(reader, writer, presenter):
         await writer.wait_closed()
         return
 
-    # ---- Header lesen → dict ----
     headers = {}
     while True:
         line = await reader.readline()
