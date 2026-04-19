@@ -9,6 +9,7 @@ except ImportError:
     import asyncio
 
 import gc
+import os
 
 from pitnode.web.websocket import handle_websocket
 from pitnode.log.log import error, info
@@ -63,6 +64,7 @@ async def http_handler(reader, writer, presenter):
         return
     try:
         method, path, _ = request.decode().split(" ")
+        path = path.split("?")[0]
     except Exception:
         error("Webserver client error:")
         writer.close()
@@ -104,12 +106,31 @@ async def http_handler(reader, writer, presenter):
         await writer.wait_closed()
         return
     
-    # ---- static files (app.js) ----
-    if path.endswith("/app.js"):
+    if path.endswith(".svg"):
+        await send_file(
+            writer,
+            build_path(path),
+            "image/svg"
+        )
+        writer.close()
+        await writer.wait_closed()
+        return
+    
+    if path.endswith(".js"):
         await send_file(
             writer,
             build_path(path),
             "application/javascript"
+        )
+        writer.close()
+        await writer.wait_closed()
+        return
+    
+    if path.endswith(".ttf"):
+        await send_file(
+            writer,
+            build_path(path),
+            "font/ttf"
         )
         writer.close()
         await writer.wait_closed()
@@ -134,9 +155,12 @@ async def http_handler(reader, writer, presenter):
 
 async def send_file(writer, path, content_type):
     try:
+        size = os.stat(path)[6]
         writer.write(b"HTTP/1.1 200 OK\r\n")
         writer.write(b"Content-Type: ")
         writer.write(content_type.encode())
+        writer.write(b"\r\nContent-Length: ")
+        writer.write(str(size).encode())
         writer.write(b"\r\nConnection: close\r\n\r\n")
         await writer.drain()
 

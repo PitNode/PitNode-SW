@@ -25,6 +25,14 @@ try:
 except ImportError:
     import json
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from pitnode.core.presenter import PitNodePresenter
+
 from pitnode.log.log import error, info
 
 # ---- WebSocket RFC-Konstante ----
@@ -60,20 +68,31 @@ async def ws_recv(reader):
 async def ws_send(writer, text):
     data = text.encode()
     length = len(data)
-    if length >= 126:
-        return  # ignore
+
     frame = bytearray()
-    frame.append(0x81)  # FIN + Text
-    frame.append(length) # unmasked
+    frame.append(0x81)  # FIN + Text Frame
+
+    if length < 126:
+        frame.append(length)
+    elif length < 65536:
+        frame.append(126)
+        frame.extend(length.to_bytes(2, "big"))
+    else:
+        frame.append(127)
+        frame.extend(length.to_bytes(8, "big"))
+
     frame.extend(data)
-    writer.write(frame)
-    await writer.drain()
+
+    try:
+        writer.write(frame)
+    except Exception as e:
+        error(f"[WS] send failed: {e}")
 
 # WebSocket Session
-async def websocket_session(reader, writer, presenter):
+async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
     ws = WebSocketClient(writer)
-    unit = presenter.get_unit()
-    await ws.update_unit(unit)
+    # Initialize data after connect
+
     push_task = asyncio.create_task(ws_push_loop(ws, presenter))
     try:
         while True:
@@ -114,27 +133,8 @@ async def websocket_session(reader, writer, presenter):
         await writer.wait_closed()
         gc.collect()
 
-async def ws_push_loop(ws, presenter):
-    try:
-        while True:
-            temps = presenter.get_temps()
-            targets = presenter.get_targets()
-            alarms = presenter.get_alarms()
-            bbq_temp = presenter.get_tc_temp()
-            states = presenter.get_probe_states()
-            for ch, t in enumerate(temps):
-                await ws.update_temp(ch, t, states[ch])
-            for ch, tt in enumerate(targets):
-                await ws.update_target(ch, tt)
-            for ch, a in enumerate(alarms):
-                await ws.set_alarm(ch, a)
-            await ws.update_bbq(bbq_temp)
-            await asyncio.sleep(1)
-    except (asyncio.CancelledError, OSError):
-        pass
-
 # HTTP upgrade
-async def handle_websocket(reader, writer, headers, presenter):
+async def handle_websocket(reader, writer, headers, presenter: "PitNodePresenter"):
     try:
         key = headers.get("sec-websocket-key")
         if not key:
@@ -156,48 +156,92 @@ async def handle_websocket(reader, writer, headers, presenter):
 async def ws_send_json(writer, obj):
     data = json.dumps(obj).encode()
     length = len(data)
-    if length >= 126:
-        return  # ignore
+
     frame = bytearray()
-    frame.append(0x81) # FIN + Text
-    frame.append(length)
+    frame.append(0x81)  # FIN + Text
+
+    if length < 126:
+        frame.append(length)
+    elif length < 65536:
+        frame.append(126)
+        frame.extend(length.to_bytes(2, "big"))
+    else:
+        frame.append(127)
+        frame.extend(length.to_bytes(8, "big"))
+
     frame.extend(data)
-    writer.write(frame)
-    await writer.drain()
+
+    try:
+        writer.write(frame)
+    except Exception as e:
+        error(f"[WS] send failed: {e}")
 
 class WebSocketClient:
     def __init__(self, writer):
         self.writer = writer
-    async def update_temp(self, ch, temp, state):
+
+    async def send(self, data):
         await ws_send_json(self.writer, {
-            "type": "temp",
-            "ch": ch,
-            "value": temp,
-            "state": state
+            "type": "update",
+            "data": data
         })
 
-    async def update_target(self, ch, target):
-        await ws_send_json(self.writer, {
-            "type": "target",
-            "ch": ch,
-            "value": target
-        })
+async def ws_push_loop(ws, presenter: "PitNodePresenter"):
+    try:
+        info("WS: Push loop started.")
+        while True:
+            # Probes data
+            temps = presenter.get_temps()
+            targets = presenter.get_targets()
+            bbq_temp = presenter.get_tc_temp()
+            states = presenter.get_probe_states()
+            probe_types = presenter.get_probe_types()
+            probe_model = presenter.get_probe_model()
+            
+            # Alarms
+            alarms = presenter.get_alarms()
+            
+            # Unit
+            unit = presenter.get_unit()
 
-    async def set_alarm(self, ch, active):
-        await ws_send_json(self.writer, {
-            "type": "alarm",
-            "ch": ch,
-            "value": active
-        })
+            # WiFi
+            rssi = presenter.get_rssi()
+            ssid = presenter.get_connected_ssid()
 
-    async def update_bbq(self, temp):
-        await ws_send_json(self.writer, {
-            "type": "bbq_temp",
-            "value": temp
-        })
 
-    async def update_unit(self, unit):
-        await ws_send_json(self.writer, {
-            "type": "unit",
-            "value": unit
-        })
+            system = {
+                "unit": unit,
+                "wifi": {
+                    "rssi:": rssi,
+                    "ssid": ssid
+                }
+                
+            }
+            
+            channels = {}
+
+            for ch in range(len(temps)):
+                channels[str(ch)] = {
+                    "temp": temps[ch],
+                    "target": targets[ch],
+                    "alarm": alarms[ch],
+                    "state": states[ch],
+                    "probe_name": "",
+                    "probe_type": probe_types[ch],
+                    "probe_model": probe_model,
+                    "cal": False,
+
+                }
+
+            await ws.send({
+                "channels": channels,
+                "bbq": {
+                    "temp": bbq_temp
+                },
+                "system": system
+            })
+
+            await asyncio.sleep(1)
+
+    except (asyncio.CancelledError, OSError):
+        info("WS: Push loop stopped.")

@@ -33,10 +33,18 @@ from pitnode.core.tc_filter import TcFilter
 from pitnode.core.calibration import CalibrationWizard
 from pitnode.log.log import info, warn, error
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from pitnode.core.config_parser import Config
+    from pitnode.driver.base_board import BaseBoard
 
 class PitNodeCtrl:
     """Class for controlling the PitNode"""
-    def __init__(self, hw=None, cfg=None) -> None:
+    def __init__(self, hw: "BaseBoard|None"=None, cfg: "Config|None"=None) -> None:
         self._hw = hw
         self._cfg = cfg
         self._probe_channels = hw.hw_cfg.PROBE_CHANNELS #type:ignore

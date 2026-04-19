@@ -6,9 +6,18 @@
 
 from pitnode.log.log import info, warn, error
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from pitnode.core.controller import PitNodeCtrl
+    from pitnode.app.app import WifiView, SystemStatus
+
 
 class PitNodePresenter:
-    def __init__(self, system_status, wifi_view, ctrl):
+    def __init__(self, system_status: "SystemStatus", wifi_view: "WifiView", ctrl: "PitNodeCtrl"):
         self._on_gui_ready = None
         self.screen = None
         self._status = system_status
@@ -53,7 +62,6 @@ class PitNodePresenter:
             self._on_reboot()
 
     # API
-    
     def get_cfg(self):
         return self._cfg
 
@@ -80,12 +88,21 @@ class PitNodePresenter:
     
     def get_connected_ssid(self):
         return self._wifi_view.get_connected_ssid()
+    
+    def get_rssi(self):
+        return self._wifi_view.get_rssi()
 
     def get_status(self):
         return self._status
     
     def get_num_probe_channels(self):
         return self._ctrl.num_probe_ch
+    
+    def get_probe_types(self):
+        return self._cfg.PROBES
+    
+    def get_probe_model(self):
+        return self._cfg.PROBE_MODEL
 
     def set_gui_ready_callback(self, cb):
         self._on_gui_ready = cb

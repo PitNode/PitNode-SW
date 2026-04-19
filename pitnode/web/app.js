@@ -3,53 +3,210 @@
 // https://github.com/pitnode/pitnode
 // https://www.pitnode.de
 
+// Probe State enum
 const ProbeState = {
   OK: 0,
-  NOT_CONNECTED: 1,
-  ERROR: 2
+  OPEN: 1,
+  SHORT: 2,
+  INVALID: 3,
 };
 
-let userInteracting = false;
-let temps = [];
-let targets = [];
-let alarms = [];
-let bbq_temp = null;
-let currentUnit = "C";
-const channels = {};  // { ch: { tempEl, targetEl, sliderEl } }
+// State definition
+const state = {
+  channels: {},
+  bbq: {
+    temp: null
+  },
+  system: {
+    unit: "°C",
+    wifi: {}
+  }
+};
 
+// Settings
 const baseRangeC = { min: 0, max: 150 };
+let userInteracting = false;
 
+const channelsEl = {};  // { ch: { tempEl, targetEl, sliderEl } }
+
+
+// Open Websocket
 const ws = new WebSocket("ws://" + location.host + "/ws");
-
 ws.onopen = () => console.log("WS open");
+
+// Handle Websocket messages
 ws.onmessage = e => handleMessage(e.data);
 
+function handleMessage(msg) {
+  let parsed;
+
+  try {
+    parsed = JSON.parse(msg);
+  } catch (e) {
+    console.error("Invalid JSON", msg);
+    return;
+  }
+
+  if (parsed.type !== "update") {
+    console.warn("Unknown message type:", parsed.type);
+    return;
+  }
+
+  if (parsed.data.channels !== undefined) {
+    state.channels = parsed.data.channels;
+  }
+
+  if (parsed.data.bbq !== undefined) {
+    state.bbq = parsed.data.bbq;
+  }
+
+  if (parsed.data.system !== undefined) {
+    state.system = parsed.data.system;
+  }
+  
+  render();
+}
+
+// Render html
+function render() {
+  renderChannels();
+  renderBBQ();
+  renderSystem();
+}
+
+function renderChannels() {
+  const channelsData = state.channels;
+
+  for (const ch in channelsData) {
+    
+    if (!channelsEl[ch]) {
+      createChannel(Number(ch));
+    }
+
+    const channelData = channelsData[ch];
+    const channelUI = channelsEl[ch];
+    if (!channelData) continue;
+
+    const probe_state = channelData.state;
+    const temp = channelData.temp;
+
+    console.log(probe_state)
+    if (!Number.isFinite(temp)) {
+      channelUI.tempEl.innerText = "Probe not connected";
+      channelUI.unitEls.forEach(el => el.innerText = "");
+      continue;
+    }
+
+    channelUI.tempEl.innerText = temp.toFixed(1);
+    channelUI.unitEls.forEach(el => el.innerText = " " + state.system.unit);
+
+    const target = channelData.target ?? 0;
+
+    if (!userInteracting) {
+      channelUI.targetEl.innerText = target;
+      channelUI.sliderEl.value = target;
+    }
+
+    const alarm = channelData.alarm ?? false;
+    setAlarmActive(ch, alarm);
+  }
+}
+
+const bbqElements = {
+  title: document.querySelector(".bbq-title"),
+  temp: document.querySelector(".bbq-temp"),
+  unit: document.querySelector(".bbq-unit")
+};
+
+function renderBBQ() {
+  bbqElements.title.innerText = "BBQ";
+
+  const temp = state.bbq.temp;
+
+  if (!Number.isFinite(temp)) {
+    bbqElements.temp.innerText = "Probe not connected";
+    if (bbqElements.unit) bbqElements.unit.innerText = "";
+    return;
+  }
+
+  bbqElements.temp.innerText = temp.toFixed(1);
+}
+
+function renderSystem() {
+  updateAllUnits();
+  updateSliderRanges();
+}
+
+function updateAllUnits() {
+  document.querySelectorAll(".unit").forEach(el => {
+    el.innerText = " " + state.system.unit;
+  });
+}
+
+function updateSliderRanges() {
+  const r = getRange(state.system.unit);
+
+  document.querySelectorAll(".ch-slider").forEach(slider => {
+    slider.min = r.min;
+    slider.max = r.max;
+  });
+}
+
+function getRange(unit) {
+  if (unit === "°C") return baseRangeC;
+
+  if (unit === "°F") {
+    return {
+      min: Math.round(baseRangeC.min * 9/5 + 32),
+      max: Math.round(baseRangeC.max * 9/5 + 32)
+    };
+  }
+
+  return baseRangeC;
+}
+
 function createChannel(ch) {
+  console.log("CREATE CHANNEL:", ch);
+  ssid = document.querySelector(".ssid-name")
+  const wifi_icon = document.querySelector('.wlan_icon');
+
+  if (state.system.wifi.ssid !== null) {
+    ssid.innerText = state.system.wifi.ssid
+    wifi_icon.style.color = "limegreen";
+  }
+
   const root = document.getElementById("channels");
   const tpl = document.getElementById("channel-template");
 
   const clone = tpl.content.cloneNode(true);
-
   const title  = clone.querySelector(".ch-title");
   const temp   = clone.querySelector(".ch-temp");
   const target = clone.querySelector(".ch-target");
   const slider = clone.querySelector(".ch-slider");
   const alarmBtn = clone.querySelector(".alarm-btn");
+  const probe_type = clone.querySelector(".probe-type");
+  const probe_param = clone.querySelector(".probe-param");
+  const ch_circle = clone.querySelector(".ch-circle");
 
-  title.style.backgroundColor = getChannelColor(ch);
+  //title.style.backgroundColor = getChannelColor(ch);
+  ch_circle.style.backgroundColor = getChannelColor(ch);
 
-  const r = getRange(currentUnit);
+  const r = getRange(state.system.unit);
   slider.min = r.min;
   slider.max = r.max;
   
   const units = clone.querySelectorAll(".unit");
   
   units.forEach(el => {
-    el.innerText = " " + currentUnit;
+    el.innerText = " " + state.system.unit;
   });
 
-  ch_text = ch + 1
+  let ch_text = ch + 1;
   title.innerText = "Channel " + ch_text;
+  probe_type.innerText = state.channels[ch].probe_type
+  console.log("Probe Type", state.channels[ch].probe_type);
+  probe_param.innerText = state.channels[ch].probe_model;
+
 
   slider.addEventListener("pointerdown", () => userInteracting = true);
   slider.addEventListener("pointerup", () => userInteracting = false);
@@ -85,7 +242,7 @@ function createChannel(ch) {
 
   root.appendChild(clone);
 
-  channels[ch] = {
+  channelsEl[ch] = {
     tempEl: temp,
     targetEl: target,
     sliderEl: slider,
@@ -96,19 +253,16 @@ function createChannel(ch) {
 
 function getChannelColor(ch) {
   const colors = [
-    "#0d6efd", // blau
-    "#198754", // grün
-    "#dc3545", // rot
-    "#ffc107", // gelb
-    "#6f42c1"  // lila
+    "#f8e324",
+    "#0b5704",
+    "#0813a7",
   ];
 
   return colors[ch % colors.length];
 }
 
-
 function setAlarmActive(ch, active) {
-  const btn = channels[ch].alarmBtn;
+  const btn = channelsEl[ch].alarmBtn;
 
   if (active) {
     btn.disabled = false;
@@ -116,117 +270,5 @@ function setAlarmActive(ch, active) {
   } else {
     btn.disabled = true;
     btn.classList.remove("alarm-active");
-  }
-}
-
-function updateChannel(ch) {
-
-  if (!channels[ch]) {
-    createChannel(ch);
-  }
-
-  const channel = channels[ch];
-  const t = temps[ch];
-
-  if (!Number.isFinite(t)) {
-    channel.tempEl.innerText = "Probe not connected";
-    channel.unitEls.forEach(el => el.innerText = "");
-    return;
-  }
-
-  channel.tempEl.innerText = t.toFixed(1);
-  channel.unitEls.forEach(el => el.innerText = " " + currentUnit);
-
-  const tt = targets[ch] ?? 0;
-
-  if (!userInteracting) {
-    channel.targetEl.innerText = tt;
-    channel.sliderEl.value = tt;
-  }
-
-  const alarmState = alarms[ch] ?? false;
-  setAlarmActive(ch, alarmState);
-}
-
-function updateBBQ() {
-  const bbq_title    = document.querySelector(".bbq-title");
-  const bbq_temp_lbl = document.querySelector(".bbq-temp");
-  const bbq_unit_lbl = document.querySelector(".bbq-unit");
-
-  bbq_title.innerText = "BBQ";
-
-  if (!Number.isFinite(bbq_temp)) {
-    bbq_temp_lbl.innerText = "Probe not connected";
-    if (bbq_unit_lbl) bbq_unit_lbl.innerText = "";
-    return;
-  }
-
-  bbq_temp_lbl.innerText = bbq_temp.toFixed(1) + " " + currentUnit;
-}
-
-function updateAllUnits() {
-  document.querySelectorAll(".unit").forEach(el => {
-    el.innerText = " " + currentUnit;
-  });
-}
-
-function updateSliderRanges() {
-  const r = getRange(currentUnit);
-
-  document.querySelectorAll(".ch-slider").forEach(slider => {
-    slider.min = r.min;
-    slider.max = r.max;
-  });
-}
-
-function getRange(unit) {
-  if (unit === "C") {
-    return baseRangeC;
-  }
-
-  if (unit === "F") {
-    return {
-      min: Math.round(baseRangeC.min * 9/5 + 32),
-      max: Math.round(baseRangeC.max * 9/5 + 32)
-    };
-  }
-
-  // Fallback → C
-  return baseRangeC;
-}
-
-function handleMessage(msg) {
-  const data = JSON.parse(msg);
-
-  switch (data.type) {
-    case "temp":
-      if (data.state !== ProbeState.OK) {
-        temps[data.ch] = null;
-      } else {
-        temps[data.ch] = data.value;
-      }
-      updateChannel(data.ch);
-      break;
-
-    case "target":
-      targets[data.ch] = data.value;
-      updateChannel(data.ch);
-      break;
-
-    case "alarm":
-      alarms[data.ch] = data.value;
-      updateChannel(data.ch);
-      break;
-
-    case "bbq_temp":
-      bbq_temp = data.value;
-      updateBBQ();
-      break;
-
-    case "unit":
-      currentUnit = data.value;
-      updateAllUnits();
-      updateSliderRanges();
-      break;
   }
 }

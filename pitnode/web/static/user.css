@@ -27,3 +27,11 @@
 body {
   font-family: "Roboto", sans-serif;
 }
+
+.ch-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+}

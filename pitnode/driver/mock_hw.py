@@ -89,6 +89,12 @@ class MockWiFiDriver:
 
     def ifconfig(self):
         return ("192.168.100.10", "255.255.255.0", "192.168.100.1", "8.8.8.8")
+    
+    def config(self, type):
+        if type == "ssid":
+            return "Test-SSID"
+        else:
+            info("[WiFiMOCK] Config type not implemented.")
 
 class TempMock:
     def __init__(self, hw_cfg) -> None:

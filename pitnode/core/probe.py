@@ -10,6 +10,7 @@ try:
 except ImportError:
     def const(x): return x
 
+from pitnode.log.log import info, warn, error
 
 OPEN_THRESHOLD = const(3)
 VALID_THRESHOLD = const(2)

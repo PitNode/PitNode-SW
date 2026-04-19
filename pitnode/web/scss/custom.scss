@@ -1,5 +1,15 @@
 // Custom.scss
 
+// Farb definition
+$primary:   #c2c2c2;
+$secondary: #727272;
+$success:   #198754;
+$danger:    #dc3545;
+$warning:   #ffc107;
+$info:      #0dcaf0;
+$light:     #f8f9fa;
+$dark:      #222222;
+
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 // 1. Include functions first (so you can manipulate colors, SVGs, calc, etc)

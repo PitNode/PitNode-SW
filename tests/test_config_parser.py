@@ -7,7 +7,6 @@ import pytest
 from pitnode.core import config_parser
 
 
-
 @pytest.fixture
 def cfg_no_cal():
     cfg = config_parser.Config("config_linux.txt")
@@ -39,15 +38,14 @@ def test_parser_cal_one_ch(cfg_cal_one_ch):
     assert cfg_cal_one_ch.SH_B == [0.0002514458134272065, 2.23456e-04, 0.0002514458134272065]
     assert cfg_cal_one_ch.SH_C == [0, 3.34567e-05, 0]
 
-def test_parser_helper_functions(load_cfg):
-    cfg = load_cfg
-    cfg.PROBE_MODEL = "SH"
-    A, B, C = cfg.get_sh_coeff()
+def test_parser_helper_functions(cfg_no_cal):
+    cfg_no_cal.PROBE_MODEL = "SH"
+    A, B, C = cfg_no_cal.get_sh_coeff()
     assert A == [1.40e-3, 1.40e-3, 1.40e-3]
     assert B == [2.37e-4, 2.37e-4, 2.37e-4]
     assert C == [9.90e-8, 9.90e-8, 9.90e-8]
-    cfg.PROBE_MODEL = "BETA"
-    A, B, C = cfg.get_sh_coeff()
+    cfg_no_cal.PROBE_MODEL = "BETA"
+    A, B, C = cfg_no_cal.get_sh_coeff()
     assert A == pytest.approx([0.00045913952621429166, 0.00045913952621429166, 0.00045913952621429166], rel=1)
     assert B == pytest.approx([0.0002514458134272065, 0.0002514458134272065, 0.0002514458134272065], rel=1)
     assert C == pytest.approx([0, 0, 0], rel=1)

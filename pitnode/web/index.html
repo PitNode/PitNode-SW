@@ -18,35 +18,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
-<body class="text-bg-dark">
+<body class="bg-primary text-primary">
 
 <!-- ================= HEADER ================= -->
-<header class="container text-bg-dark">
-  <img src="/static/PitNode_Logo_Master_black_250_x_100.png" alt="PitNode" style="height:4rem; display:block; margin:auto;">
+<header>
+  <div class="container-fluid bg-body-tertiary text-end">
+    <span class="ssid-name m-2">Test</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 640 640" class="wlan_icon">
+      <!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path d="M320 160C229.1 160 146.8 196 86.3 254.6C73.6 266.9 53.3 266.6 41.1 253.9C28.9 241.2 29.1 220.9 41.8 208.7C113.7 138.9 211.9 96 320 96C428.1 96 526.3 138.9 598.3 208.7C611 221 611.3 241.3 599 253.9C586.7 266.5 566.4 266.9 553.8 254.6C493.2 196 410.9 160 320 160zM272 496C272 469.5 293.5 448 320 448C346.5 448 368 469.5 368 496C368 522.5 346.5 544 320 544C293.5 544 272 522.5 272 496zM200 390.2C188.3 403.5 168.1 404.7 154.8 393C141.5 381.3 140.3 361.1 152 347.8C193 301.4 253.1 272 320 272C386.9 272 447 301.4 488 347.8C499.7 361.1 498.4 381.3 485.2 393C472 404.7 451.7 403.4 440 390.2C410.6 356.9 367.8 336 320 336C272.2 336 229.4 356.9 200 390.2z"/>
+    </svg>
+  </div>
+  <nav class="navbar navbar-expand-lg bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <img src="/static/PitNode_Logo_Master_black_250_x_100.png" alt="PitNode" height="40">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse text-end" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Home</a>
+          </li>
+        </ul>
+    </div>
+    </div>
+  </nav>
 </header>
 
-<!-- ================= MENU ================= -->
-<nav class="container">
-  <ul>
-    <!-- <li><a href="#">Dashboard</a></li> -->
-    <!-- <li><a href="#">Settings</a></li> -->
-  </ul>
-</nav>
-
 <!-- ================= MAIN ================= -->
-<main class="container text-bg-dark">
+<main class="container">
 
   <!-- BBQ -->
-  <div class="row g-3" id="bbq">
+  <div class="row g-3 mb-3" id="bbq">
     <div class="col-12 col-md-6 col-lg-4">
-      <div class="card bg-dark-subtle h-100">
-        <div class="card-header bbq-title bg-primary"></div>
+      <div class="card h-100 bg-dark bg-gradient text-primary">
+        <div class="card-header d-flex align-items-center">
+          <span class="bbq-title text-primary"></span>
+          <div class="ms-auto">
+            <span class="badge bg-secondary">K-Type</span>
+          </div>
+        </div>
         <div class="card-body text-center">
-          <h5>
-            BBQ Probe
-            <span class="badge text-bg-secondary">K-Type</span>
-          </h5>
-
           <p class="display-5 mb-0">
             <strong class="bbq-temp"></strong>
             <span class="unit fs-6"></span>
@@ -58,35 +73,33 @@
 
   <!-- Channels -->
   <div class="row g-3" id="channels"></div>
-
   <!-- Template -->
   <template id="channel-template">
     <div class="col-12 col-md-6 col-lg-4">
-      <div class="card ch-card h-100">
-        <div class="card-header ch-title"></div>
-
+      <div class="card ch-card h-100 bg-dark bg-gradient text-primary">
+        <div class="card-header d-flex align-items-center">
+          <span class="ch-circle"></span>
+          <span class="ch-title text-primary"></span>
+          <div class="ms-auto">
+            <span class="badge probe-type bg-secondary"></span>
+            <span class="badge probe-param bg-secondary"></span>
+          </div>
+        </div>
         <div class="card-body text-center">
-          <h5>
-            Probe 1
-            <span class="badge text-bg-secondary">NTC</span>
-            <span class="badge text-bg-secondary">Steinhart-Hart</span>
-          </h5>
-
           <p class="display-5 mb-0">
             <strong class="ch-temp"></strong>
             <span class="unit fs-6"></span>
           </p>
-
           <div class="mt-3">
             <div class="mb-2">
-              SOLL:
+              Target:
               <output class="ch-target"></output>
               <span class="unit"></span>
             </div>
 
             <input type="range" min="0" max="150" class="form-range ch-slider">
 
-            <button type="button" class="btn btn-warning alarm-btn mt-2 w-100" disabled>
+            <button type="button" class="btn btn-secondary alarm-btn mt-2 w-100" disabled>
               Confirm alarm
             </button>
           </div>
@@ -108,6 +121,7 @@
 </footer>
 
 <script src="/app.js"></script>
+<script src="/static/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
