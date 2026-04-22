@@ -4,76 +4,32 @@
 # https://www.pitnode.de
 
 import pytest
-import config as config
-from pitnode.core.controller import PitNodeCtrl, NtcProbe
-from pitnode.driver.mock_hw import MockHw
+from pitnode.core.controller import PitNodeCtrl
+from pitnode.core.probe import NtcProbe
+from tests.conftest import Config
 
-T_NTC_0_MK = [298150, 298150, 298150] # in mK
-BETA_MK = [3977, 3977, 3977] # in mK
-R_NTC_0_MILOHM = [100000, 100000, 100000] # in mOhm
-R_SERIES_MILOHM = [47000000, 47000000, 47000000] # in mOhm
 
-@pytest.fixture
-def valid_controller():
+def test_probe_registration(ctrl: PitNodeCtrl, config: Config):
+    result = []
     for ch in range(3):
-        probe = NtcProbe(T_NTC_0_MK[ch], BETA_MK[ch], R_NTC_0_MILOHM[ch], f"NTC Probe CH{ch}")
-        PitNodeCtrl.register_probe(ch, probe)
+        probe = NtcProbe(config.T_NTC_0_MK[ch], config.BETA_K[ch], config.R_NTC_0_OHM[ch], f"NTC Probe CH{ch}")
+        result.append(ctrl.register_probe(ch, probe))
+    assert result == [True, True, True]
     
-    # Config auf Default setzen
-    config.UNIT = "cel"
+    result.append(ctrl.register_probe(3, "Bad probe"))
+    assert result[3] == False
+    assert len(ctrl._probes) == 3
 
-    # set values to valid temps
-    PitNodeCtrl._probe_target_deg_c_value = [51.0, 52.0, 53.0]
-    PitNodeCtrl._probe_deg_c_value = [31.0, 32.0, 33.0]
-    PitNodeCtrl._probe_mv_value = [1001, 1002, 1003]
-    PitNodeCtrl._probe_raw_value = [10001, 10002, 10003]
-    PitNodeCtrl._probe_resistance_value = [5001, 5002, 5003]
-    PitNodeCtrl._probe_mv_valid = 0b111
-    PitNodeCtrl._probe_raw_valid = 0b111
-    PitNodeCtrl._probe_target_valid = 0b111
-    PitNodeCtrl._probe_resistance_valid = 0b111
-    PitNodeCtrl._probe_deg_c_valid = 0b111
-
-    return PitNodeCtrl
-
-@pytest.fixture
-def valid_no_probes_controller():
-    # Config auf Default setzen
-    config.UNIT = "cel"
-
-    # set values to valid temps
-    PitNodeCtrl._probe_target_deg_c_value = [51.0, 52.0, 53.0]
-    PitNodeCtrl._probe_mv_value = [1001, 1002, 1003]
-    PitNodeCtrl._probe_raw_value = [10001, 10002, 10003]
-    PitNodeCtrl._probe_resistance_value = [5001, 5002, 5003]
-    PitNodeCtrl._probe_mv_valid = 0b111
-    PitNodeCtrl._probe_raw_valid = 0b111
-    PitNodeCtrl._probe_target_valid = 0b111
-    PitNodeCtrl._probe_resistance_valid = 0b111
-    PitNodeCtrl._probe_deg_c_valid = 0b111
-
-    return PitNodeCtrl
-
-def test_probe_reg(valid_no_probes_controller: PitNodeCtrl):
-    ctrl = valid_no_probes_controller
-    reg_res = []
-    for ch in range(3):
-        probe = NtcProbe(T_NTC_0_MK[ch], BETA_MK[ch], R_NTC_0_MILOHM[ch], f"NTC Probe CH{ch}")
-        reg_res.append(ctrl.register_probe(ch, probe))
-    assert reg_res == [True, True, True]
-    
-    reg_res.append(ctrl.register_probe(3, "Bad probe"))
-    assert reg_res[3] == False
-
-def test_get_temp(valid_controller: PitNodeCtrl):
-    ctrl = valid_controller
-    temps = [ctrl.get_temp(ch) for ch in range(3)]
-    assert temps == [31.0, 32.0, 33.0]
-    temps = []
-    temps = ctrl.get_temps()
-    assert temps == [31.0, 32.0, 33.0]
-    temp = ctrl.get_temp(3)
-    assert temp == False
+def test_get_temp(ctrl_ready: PitNodeCtrl):
+    raws = [30000, 30000, 30000]
+    resistances = [47928, 47928, 47928]
+    temps = [25.0, 25.0, 25.0]
+    ctrl_ready.hw._raw_temps = raws
+    result = ctrl_ready.read_res_ohm()
+    assert result == resistances
+    ctrl_ready._probe_deg_c_value = temps
+    ctrl_ready._probe_deg_c_valid |= 1 << 0
+    assert ctrl_ready.get_temps() == temps
 
 def test_set_target_temp_deg(valid_controller: PitNodeCtrl):
     ctrl = valid_controller

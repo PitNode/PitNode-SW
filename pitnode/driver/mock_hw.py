@@ -18,6 +18,7 @@ class MockHw(BaseBoard):
         self._wlan = MockWiFiDriver()
         self._temp_mock = TempMock(self._hw_cfg)
         self.wlan_cfg_path  = ("pitnode/tests")
+        self._raw_temps = [30000, 30000, 30000]
 
     @property
     def num_probe_channels(self):
@@ -34,7 +35,8 @@ class MockHw(BaseBoard):
         return self._wlan
     
     def read_raw(self):
-        return self._temp_mock.read_raw()
+        #return self._temp_mock.read_raw()
+        return self._raw_temps
     
     def read_tc(self) -> float | None:
         return 100.0

@@ -14,6 +14,12 @@ For more information and documentation see
 
 https://www.pitnode.de/
 
+![PitNode HW](/assets/images/PitNode_PicoTouch_PCB_assembled_1024px.jpg)
+
+![PitNode Case](/assets/images/PitNode_PicoTouch_Case.jpg)
+
+![PitNode WebUI](/assets/images/PitNode_Web_UI_1.png)
+
 "PitNode" is the project name used for this open-source project.
 
 > [!NOTE]

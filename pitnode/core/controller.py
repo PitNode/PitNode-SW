@@ -44,7 +44,11 @@ if TYPE_CHECKING:
 
 class PitNodeCtrl:
     """Class for controlling the PitNode"""
-    def __init__(self, hw: "BaseBoard|None"=None, cfg: "Config|None"=None) -> None:
+    def __init__(
+            self,
+            hw: "BaseBoard|None"=None,
+            cfg: "Config|None"=None
+            ) -> None:
         self._hw = hw
         self._cfg = cfg
         self._probe_channels = hw.hw_cfg.PROBE_CHANNELS #type:ignore
