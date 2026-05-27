@@ -37,7 +37,7 @@ echo "--- Copy root files ---"
 $MPREMOTE cp main.py :
 $MPREMOTE cp touch_setup.py :
 $MPREMOTE cp config.txt :
-$MPREMOTE cp bg_img.bin :
+$MPREMOTE cp pitnode.bin :
 
 # ---------- pitnode ----------
 echo "--- Create pitnode directories (excluding pycache and tests) ---"
@@ -51,19 +51,23 @@ find pitnode \( -name "__pycache__" -o -name "tests" \) -prune -o -type f \( -na
 done
 
 # ---------- web assets ----------
-find pitnode/web -type d -name "__pycache__" -prune -o -type d -print | while read d; do
+find pitnode/web \
+    \( -name "__pycache__" -o -name "node_modules" -o -name "scss" \) -prune \
+    -o -type d -print | while read d; do
     mp_mkdir "$d"
 done
 
 echo "--- Copy web assets ---"
-find pitnode/web -type d -name "__pycache__" -prune -o -type f \( \
-    -name "*.html" -o \
-    -name "*.css"  -o \
-    -name "*.js"   -o \
-    -name "*.json" -o \
-    -name "*.png" -o \
-    -name "*.ico" \
-  \) -print | while read f; do
+find pitnode/web \
+    \( -name "__pycache__" -o -name "node_modules" -o -name "scss" \) -prune \
+    -o -type f \( \
+        -name "*.html" -o \
+        -name "*.css"  -o \
+        -name "*.js"   -o \
+        -name "*.json" -o \
+        -name "*.png"  -o \
+        -name "*.ico" \
+    \) -print | while read f; do
     $MPREMOTE cp "$f" ":$f"
 done
 

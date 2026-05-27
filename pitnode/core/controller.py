@@ -156,9 +156,15 @@ class PitNodeCtrl:
 
     def get_temps(self) -> list:
         """Return all temperatures as list."""
-        temps = self._probe_deg_c_value
-        return temps if self._cfg.UNIT == "cel" else ([(t * 9 / 5 + 32) for t in temps]) #type:ignore
-
+        temps = [
+            (t if self._cfg.UNIT == "cel" else (t * 9 / 5 + 32))
+            if _is_flag_valid(self._probe_deg_c_valid, ch)
+            else None
+            for ch, t in enumerate(self._probe_deg_c_value)
+        ]
+        
+        return temps
+    
     def get_probe_states(self) -> list:
         """Return all probe states as list."""
         return self._probe_state

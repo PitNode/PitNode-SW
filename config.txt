@@ -28,6 +28,6 @@ PROBES = NTC, NTC, NTC
 ENABLE_WIFI = True
 
 # Flag is only for development
-DEV_MODE = True
+DEV_MODE = False
 
 WEB_PORT = 80

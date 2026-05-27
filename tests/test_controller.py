@@ -23,13 +23,26 @@ def test_probe_registration(ctrl: PitNodeCtrl, config: Config):
 def test_get_temp(ctrl_ready: PitNodeCtrl):
     raws = [30000, 30000, 30000]
     resistances = [47928, 47928, 47928]
-    temps = [25.0, 25.0, 25.0]
+    temps_cel = [25.0, 25.0, 25.0]
+    temps_far = [77.0, 77.0, 77.0]
     ctrl_ready.hw._raw_temps = raws
+    ctrl_ready._probe_deg_c_value = temps_cel
+    
     result = ctrl_ready.read_res_ohm()
     assert result == resistances
-    ctrl_ready._probe_deg_c_value = temps
-    ctrl_ready._probe_deg_c_valid |= 1 << 0
-    assert ctrl_ready.get_temps() == temps
+
+    ctrl_ready._probe_deg_c_valid = 0b111
+    ctrl_ready._cfg.UNIT = "far"
+    assert ctrl_ready.get_temps() == temps_far
+
+    ctrl_ready._cfg.UNIT = "cel"
+    assert ctrl_ready.get_temps() == temps_cel
+
+    ctrl_ready._probe_deg_c_valid = 0b001
+    assert ctrl_ready.get_temps() == [25.0, None, None]
+
+    ctrl_ready._probe_deg_c_valid = 0b010
+    assert ctrl_ready.get_temps() == [None, 25.0, None]
 
 def test_set_target_temp_deg(valid_controller: PitNodeCtrl):
     ctrl = valid_controller
