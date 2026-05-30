@@ -66,6 +66,7 @@ find pitnode/web \
         -name "*.js"   -o \
         -name "*.json" -o \
         -name "*.png"  -o \
+        -name "*.ttf"  -o \
         -name "*.ico" \
     \) -print | while read f; do
     $MPREMOTE cp "$f" ":$f"

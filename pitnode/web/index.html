@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
-<body class="bg-primary text-primary">
+<body hx-ext="ws" ws-connect="/ws" class="bg-primary text-primary">
 
 <!-- ================= HEADER ================= -->
 <header>
@@ -51,62 +51,34 @@
 <!-- ================= MAIN ================= -->
 <main class="container">
 
-  <!-- BBQ -->
+<!-- ================= BBQ ================= -->
   <div class="row g-3 mb-3" id="bbq">
     <div class="col-12 col-md-6 col-lg-4">
       <div class="card h-100 bg-dark bg-gradient text-primary">
         <div class="card-header d-flex align-items-center">
-          <span class="bbq-title text-primary"></span>
+          <span class="bbq-title text-primary">BBQ</span>
           <div class="ms-auto">
-            <span class="badge bg-secondary">K-Type</span>
+            <span id="type-bbq-probe" class="badge bg-secondary">?</span>
           </div>
         </div>
         <div class="card-body text-center">
           <p class="display-5 mb-0">
-            <strong class="bbq-temp"></strong>
-            <span class="unit fs-6"></span>
+            <strong id="bbq-temp">--</strong>
+            <span class="unit fs-6">--</span>
           </p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Channels -->
-  <div class="row g-3" id="channels"></div>
-  <!-- Template -->
-  <template id="channel-template">
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card ch-card h-100 bg-dark bg-gradient text-primary">
-        <div class="card-header d-flex align-items-center">
-          <span class="ch-circle"></span>
-          <span class="ch-title text-primary"></span>
-          <div class="ms-auto">
-            <span class="badge probe-type bg-secondary"></span>
-            <span class="badge probe-param bg-secondary"></span>
-          </div>
-        </div>
-        <div class="card-body text-center">
-          <p class="display-5 mb-0">
-            <strong class="ch-temp"></strong>
-            <span class="unit fs-6"></span>
-          </p>
-          <div class="mt-3">
-            <div class="mb-2">
-              Target:
-              <output class="ch-target"></output>
-              <span class="unit"></span>
-            </div>
-
-            <input type="range" min="0" max="150" class="form-range ch-slider">
-
-            <button type="button" class="btn btn-secondary alarm-btn mt-2 w-100" disabled>
-              Confirm alarm
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
+<!-- ================= Channels ================= -->
+<div class="row g-3" id="channels">
+  <div id="channel"
+    hx-get="/channel"
+    hx-trigger="load"
+    hx-swap="outerHTML">
+  </div>
+</div>
 
 </main>
 
@@ -122,6 +94,8 @@
 
 <script src="/app.js"></script>
 <script src="/static/bootstrap.bundle.min.js"></script>
+<script src="/static/htmx.min.js"></script>
+<script src="/static/htmx-ext-ws.js"></script>
 
 </body>
 </html>

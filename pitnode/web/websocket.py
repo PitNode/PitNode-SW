@@ -92,7 +92,7 @@ async def ws_send(writer, text):
 async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
     ws = WebSocketClient(writer)
     # Initialize data after connect
-
+    await asyncio.sleep(1)
     push_task = asyncio.create_task(ws_push_loop(ws, presenter))
     try:
         while True:
@@ -180,66 +180,130 @@ class WebSocketClient:
     def __init__(self, writer):
         self.writer = writer
 
-    async def send(self, data):
-        await ws_send_json(self.writer, {
-            "type": "update",
-            "data": data
-        })
+    async def send(self, html):
+        await ws_send(self.writer, html)
+
+def render_temp(ch, temp):
+    if not temp:
+        temp=-1
+    return f"""
+    <strong id="temp-{ch}" hx-swap-oob="outerHTML">{temp:.1f}</strong>
+    """
+
+def render_unit(unit):
+    return f"""
+    <span hx-swap-oob="innerHTML:.unit">{unit}</span>
+    """
+
+def render_bbq_temp(temp):
+    if not temp:
+        temp=-1
+    return f"""
+    <strong id="bbq-temp" hx-swap-oob="outerHTML">{temp:.1f}</strong>
+    """
+
+def render_bbq_type_probe(type):
+    return f"""
+    <span id="type-bbq-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{type}</span>
+    """
+
+def render_ch_probe(ch, type, model):
+    return f"""
+    <span id="type-ch-{ch}-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{type}</span>
+    <span id="model-ch-{ch}-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{model}</span>
+    """
+
+def render_target(ch, target):
+    return f"""
+    <output id="target-{ch}"
+            hx-swap-oob="outerHTML">
+        {target}
+    </output>
+    """
+
+def render_alarm_button(ch, alarm):
+    if alarm:
+        return f"""
+        <button
+            id="alarm-{ch}"
+            class="btn btn-secondary alarm-btn mt-2 w-100 alarm-active"
+            data-ch="{ch}"
+            hx-swap-oob="outerHTML">
+            Confirm alarm
+        </button>
+        """
+    else:
+        return f"""
+        <button
+            id="alarm-{ch}"
+            class="btn btn-secondary alarm-btn mt-2 w-100"
+            data-ch="{ch}"
+            disabled
+            hx-swap-oob="outerHTML">
+            Confirm alarm
+        </button>
+        """
 
 async def ws_push_loop(ws, presenter: "PitNodePresenter"):
     try:
         info("WS: Push loop started.")
+        # Unit
+        unit = presenter.get_unit()
+        temps = presenter.get_temps()
+        probe_types = presenter.get_probe_types()
+        probe_model = presenter.get_probe_model()
+
+        html=""
+        for ch in range(len(temps)):
+            html += render_unit(
+                unit=unit
+            )
+            html += render_bbq_type_probe(
+                type=probe_types[ch]
+            )
+            html += render_ch_probe(
+                ch=ch,
+                type=probe_types[ch],
+                model=probe_model,
+            )
+        await ws.send(html)
+
         while True:
             # Probes data
             temps = presenter.get_temps()
             targets = presenter.get_targets()
             bbq_temp = presenter.get_tc_temp()
             states = presenter.get_probe_states()
-            probe_types = presenter.get_probe_types()
-            probe_model = presenter.get_probe_model()
-            
+
             # Alarms
             alarms = presenter.get_alarms()
             
-            # Unit
-            unit = presenter.get_unit()
-
             # WiFi
             rssi = presenter.get_rssi()
             ssid = presenter.get_connected_ssid()
 
-
-            system = {
-                "unit": unit,
-                "wifi": {
-                    "rssi:": rssi,
-                    "ssid": ssid
-                }
-                
-            }
-            
-            channels = {}
-
+            html=""
             for ch in range(len(temps)):
-                channels[str(ch)] = {
-                    "temp": temps[ch],
-                    "target": targets[ch],
-                    "alarm": alarms[ch],
-                    "state": states[ch],
-                    "probe_name": "",
-                    "probe_type": probe_types[ch],
-                    "probe_model": probe_model,
-                    "cal": False,
+                html += render_temp(
+                    ch=ch,
+                    temp=temps[ch]
+                )
 
-                }
+                html += render_bbq_temp(
+                    temp=bbq_temp
+                )
 
-            await ws.send({
-                "channels": channels,
-                "bbq": {
-                    "temp": bbq_temp
-                },
-                "system": system
-            })
+                html += render_target(
+                    ch=ch,
+                    target=targets[ch]
+                )
+
+                html += render_alarm_button(
+                    ch=ch,
+                    alarm=alarms[ch]
+                )
+
+            await ws.send(html)
 
             await asyncio.sleep(1)
 
