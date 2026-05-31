@@ -40,27 +40,52 @@ $MPREMOTE cp config.txt :
 $MPREMOTE cp pitnode.bin :
 
 # ---------- pitnode ----------
-echo "--- Create pitnode directories (excluding pycache and tests) ---"
-find pitnode \( -name "__pycache__" -o -name "tests" \) -prune -o -type d -print | while read d; do
+echo "--- Create pitnode directories ---"
+find pitnode \
+    \( \
+        -name "__pycache__" -o \
+        -name "tests" -o \
+        -name "node_modules" -o \
+        -name "scss" \
+    \) -prune \
+    -o -type d -print | while read d; do
     mp_mkdir "$d"
 done
 
 echo "--- Copy pitnode files (.py and .txt, excluding tests) ---"
-find pitnode \( -name "__pycache__" -o -name "tests" \) -prune -o -type f \( -name "*.py" -o -name "*.txt" \) -print | while read f; do
+find pitnode \
+    \( \
+        -name "__pycache__" -o \
+        -name "tests" -o \
+        -name "node_modules" -o \
+        -name "scss" \
+    \) -prune \
+    -o -type f \
+    \( -name "*.py" -o -name "*.txt" \) \
+    -print | while read f; do
     $MPREMOTE cp "$f" ":$f"
 done
 
 # ---------- web assets ----------
-find pitnode/web \
-    \( -name "__pycache__" -o -name "node_modules" -o -name "scss" \) -prune \
-    -o -type d -print | while read d; do
+find pitnode/web -type d | while read d; do
+    case "$d" in
+        */node_modules/*|*/node_modules|\
+        */scss/*|*/scss|\
+        */__pycache__/*|*/__pycache__)
+            continue
+            ;;
+    esac
+    echo "MKDIR: $d"
     mp_mkdir "$d"
 done
 
 echo "--- Copy web assets ---"
 find pitnode/web \
     \( -name "__pycache__" -o -name "node_modules" -o -name "scss" \) -prune \
-    -o -type f \( \
+    -o -type f \
+    ! -name "package.json" \
+    ! -name "package-lock.json" \
+    \( \
         -name "*.html" -o \
         -name "*.css"  -o \
         -name "*.js"   -o \

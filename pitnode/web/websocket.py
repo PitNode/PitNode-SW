@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from pitnode.core.presenter import PitNodePresenter
 
 from pitnode.log.log import error, info
+from pitnode.core.probe import ProbeState
 
 # ---- WebSocket RFC-Konstante ----
 WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -183,12 +184,19 @@ class WebSocketClient:
     async def send(self, html):
         await ws_send(self.writer, html)
 
-def render_temp(ch, temp):
+def render_temp(ch, temp, state):
     if not temp:
-        temp=-1
-    return f"""
-    <strong id="temp-{ch}" hx-swap-oob="outerHTML">{temp:.1f}</strong>
-    """
+        return f"""
+        <strong id="temp-{ch}" hx-swap-oob="outerHTML">no temp received</strong>
+        """
+    elif state != ProbeState.OK:
+        return f"""
+        <strong id="temp-{ch}" hx-swap-oob="outerHTML">{state}</strong>
+        """
+    else:
+        return f"""
+        <strong id="temp-{ch}" hx-swap-oob="outerHTML">{temp:.1f}</strong>
+        """
 
 def render_unit(unit):
     return f"""
@@ -197,10 +205,13 @@ def render_unit(unit):
 
 def render_bbq_temp(temp):
     if not temp:
-        temp=-1
-    return f"""
-    <strong id="bbq-temp" hx-swap-oob="outerHTML">{temp:.1f}</strong>
-    """
+        return f"""
+        <strong id="bbq-temp" hx-swap-oob="outerHTML">no temp received</strong>
+        """
+    else:
+        return f"""
+        <strong id="bbq-temp" hx-swap-oob="outerHTML">{temp:.1f}</strong>
+        """
 
 def render_bbq_type_probe(type):
     return f"""
@@ -244,6 +255,11 @@ def render_alarm_button(ch, alarm):
         </button>
         """
 
+def render_wifi(ssid, rssi):
+    return f"""
+    <span id="ssid" hx-swap-oob="outerHTML" class="ssid-name m-2">{ssid}</span>
+    """
+
 async def ws_push_loop(ws, presenter: "PitNodePresenter"):
     try:
         info("WS: Push loop started.")
@@ -286,7 +302,8 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
             for ch in range(len(temps)):
                 html += render_temp(
                     ch=ch,
-                    temp=temps[ch]
+                    temp=temps[ch],
+                    state=states[ch]
                 )
 
                 html += render_bbq_temp(
@@ -301,6 +318,11 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
                 html += render_alarm_button(
                     ch=ch,
                     alarm=alarms[ch]
+                )
+
+                html += render_wifi(
+                    ssid=ssid,
+                    rssi=rssi
                 )
 
             await ws.send(html)

@@ -3,25 +3,6 @@
 // https://github.com/pitnode/pitnode
 // https://www.pitnode.de
 
-// Probe State enum
-const ProbeState = {
-  OK: 0,
-  OPEN: 1,
-  SHORT: 2,
-  INVALID: 3,
-};
-
-// State definition
-const state = {
-  channels: {},
-  bbq: {
-    temp: null
-  },
-  system: {
-    unit: "°C",
-    wifi: {}
-  }
-};
 
 // Open Websocket
 const ws = new WebSocket("ws://" + location.host + "/ws");
