@@ -5,8 +5,8 @@
 
 
 // Open Websocket
-const ws = new WebSocket("ws://" + location.host + "/ws");
-ws.onopen = () => console.log("WS open");
+//const ws = new WebSocket("ws://" + location.host + "/ws");
+//ws.onopen = () => console.log("WS open");
 
 document.addEventListener("change", (e) => {
 

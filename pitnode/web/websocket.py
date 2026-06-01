@@ -91,10 +91,13 @@ async def ws_send(writer, text):
 
 # WebSocket Session
 async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
+    info(f"WS session started {id(writer)}")
+    push_task = None
     ws = WebSocketClient(writer)
     # Initialize data after connect
     await asyncio.sleep(1)
-    push_task = asyncio.create_task(ws_push_loop(ws, presenter))
+    if push_task is None:
+        push_task = asyncio.create_task(ws_push_loop(ws, presenter))
     try:
         while True:
             try:
@@ -104,7 +107,7 @@ async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
                 break
             # CLOSE Frame
             if opcode == 0x8:
-                info("[WS] Client sent CLOSE")
+                info(f"[WS] CLOSE {id(writer)}")
                 break
             # PING (ignorieren)
             if opcode == 0x9:
@@ -124,7 +127,9 @@ async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
             if data.get("cmd") == "confirm_alarm":
                 info(f"[WS] Received confirm_alarm: {data}")
                 presenter.confirm_alarm(data["ch"])
+    
     finally:
+        info(f"WS session ended {id(writer)}")
         push_task.cancel()
         try:
             await push_task
@@ -137,6 +142,8 @@ async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
 # HTTP upgrade
 async def handle_websocket(reader, writer, headers, presenter: "PitNodePresenter"):
     try:
+        info(f"NEW WS: {headers.get('user-agent')}")
+        info(f"NEW WS key: {headers.get('sec-websocket-key')}")
         key = headers.get("sec-websocket-key")
         if not key:
             await writer.wait_closed()
@@ -260,6 +267,53 @@ def render_wifi(ssid, rssi):
     <span id="ssid" hx-swap-oob="outerHTML" class="ssid-name m-2">{ssid}</span>
     """
 
+def make_points(values):
+    n = len(values)
+
+    if n < 2:
+        return ""
+
+    vmin = min(values)
+    vmax = max(values)
+
+    # alle Werte gleich
+    if vmax == vmin:
+        return " ".join(
+            f"{i * 100 / (n - 1):.1f},15"
+            for i in range(n)
+        )
+
+    result = []
+
+    for i, value in enumerate(values):
+        x = i * 100 / (n - 1)
+
+        normalized = (value - vmin) / (vmax - vmin)
+
+        y = 28 - normalized * 26
+
+        result.append(f"{x:.1f},{y:.1f}")
+
+    return " ".join(result)
+
+def render_bbq_trend(values):
+    points = make_points(values)
+
+    return f"""
+    <svg
+        id="bbq_trend"
+        hx-swap-oob="outerHTML"
+        class="trend"
+        viewBox="0 0 100 30"
+        preserveAspectRatio="none">
+        <polyline
+            points="{points}"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.0"/>
+    </svg>
+    """
+
 async def ws_push_loop(ws, presenter: "PitNodePresenter"):
     try:
         info("WS: Push loop started.")
@@ -290,6 +344,7 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
             targets = presenter.get_targets()
             bbq_temp = presenter.get_tc_temp()
             states = presenter.get_probe_states()
+            bbq_history = presenter.get_bbq_history()
 
             # Alarms
             alarms = presenter.get_alarms()
@@ -299,6 +354,9 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
             ssid = presenter.get_connected_ssid()
 
             html=""
+            if len(bbq_history) >= 2:
+                html += render_bbq_trend(bbq_history)
+
             for ch in range(len(temps)):
                 html += render_temp(
                     ch=ch,

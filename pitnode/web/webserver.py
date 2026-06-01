@@ -144,6 +144,7 @@ async def http_handler(reader, writer, presenter):
     
     # ---- HTTP requests ----
     if path == "/":
+        info("INDEX PAGE REQUEST")
         await send_file(
             writer,
             build_path(path),

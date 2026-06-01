@@ -31,6 +31,7 @@ from pitnode.core.probe import ProbeState, OPEN_THRESHOLD, VALID_THRESHOLD, NtcP
 from pitnode.core.sensor_eval import eval_resistance_raw
 from pitnode.core.tc_filter import TcFilter
 from pitnode.core.calibration import CalibrationWizard
+from pitnode.core.statistics import MinuteHistory
 from pitnode.log.log import info, warn, error
 
 try:
@@ -76,6 +77,11 @@ class PitNodeCtrl:
         self._buzzer = False
         self._alarm_acked_flag = 0
         self._num_channels = self._probe_channels
+        self._history_channels = [
+            MinuteHistory()
+            for _ in range(self._probe_channels)
+        ]
+        self._history_bbq = MinuteHistory()
 
     @property
     def num_probe_ch(self):
@@ -137,7 +143,10 @@ class PitNodeCtrl:
             return None
         t = self._tc_deg_c_value
         return t if self._cfg.UNIT == "cel" else (t * 9 / 5 + 32) #type:ignore
-    
+
+    def get_tc_history(self):
+        return self._history_bbq.history
+
     def get_temp(self, ch: int) -> None | bool | float:
         """
         Return the temperature for given channel.
@@ -371,6 +380,7 @@ class PitNodeCtrl:
         if filt.state == ProbeState.OK and value is not None:
             self._tc_deg_c_value = value
             self._tc_deg_c_valid = 1
+            self._history_bbq.add_sample(value)
         else:
             self._tc_deg_c_valid = 0
 
@@ -465,4 +475,4 @@ def _is_valid_target(valid_target_flag, ch: int) -> bool:
 
 def _is_flag_valid(flags, ch: int):
     """Return True if the flag of channel is valid."""
-    return bool((flags & (1 << ch)))    
+    return bool((flags & (1 << ch)))

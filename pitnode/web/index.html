@@ -60,11 +60,20 @@
             <span id="type-bbq-probe" class="badge bg-secondary">?</span>
           </div>
         </div>
-        <div class="card-body text-center">
-          <p class="display-5 mb-0">
-            <strong id="bbq-temp">--</strong>
-            <span class="unit fs-6">--</span>
-          </p>
+        <div class="card-body text-center position-relative">
+          <svg id="bbq_trend" class="trend" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polyline
+              points=""
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"/>
+          </svg>
+          <div class="card-content">
+            <p class="display-5 mb-1">
+              <strong id="bbq-temp">--</strong>
+              <span class="unit fs-6">--</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -148,6 +148,9 @@ class PitNodePresenter:
     
     def get_alarms(self):
         return [self._ctrl.is_alarm_active(ch) for ch in range(self._ctrl.hw.num_probe_channels)]
+    
+    def get_bbq_history(self):
+        return self._ctrl.get_tc_history()
 
     def inc_target(self, ch):
         tt = self._ctrl.get_target_temp(ch)
