@@ -33,8 +33,9 @@ except ImportError:
 if TYPE_CHECKING:
     from pitnode.core.presenter import PitNodePresenter
 
+from pitnode.web.views import ws_views
 from pitnode.log.log import error, info
-from pitnode.core.probe import ProbeState
+
 
 # ---- WebSocket RFC-Konstante ----
 WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -112,21 +113,6 @@ async def websocket_session(reader, writer, presenter: "PitNodePresenter"):
             # PING (ignorieren)
             if opcode == 0x9:
                 continue
-            # Only text
-            if opcode != 0x1:
-                continue
-            try:
-                data = json.loads(payload)
-            except ValueError:
-                error(f"[WS] Invalid JSON: {payload!r}")
-                continue
-            if data.get("cmd") == "set_targets":
-                presenter.set_target_temps(data["values"])
-            if data.get("cmd") == "set_target":
-                presenter.set_target_temp(data["ch"], data["value"])
-            if data.get("cmd") == "confirm_alarm":
-                info(f"[WS] Received confirm_alarm: {data}")
-                presenter.confirm_alarm(data["ch"])
     
     finally:
         info(f"WS session ended {id(writer)}")
@@ -161,28 +147,6 @@ async def handle_websocket(reader, writer, headers, presenter: "PitNodePresenter
     except OSError as e:
         info(f"[WS] Connection closed: {e}")
 
-async def ws_send_json(writer, obj):
-    data = json.dumps(obj).encode()
-    length = len(data)
-
-    frame = bytearray()
-    frame.append(0x81)  # FIN + Text
-
-    if length < 126:
-        frame.append(length)
-    elif length < 65536:
-        frame.append(126)
-        frame.extend(length.to_bytes(2, "big"))
-    else:
-        frame.append(127)
-        frame.extend(length.to_bytes(8, "big"))
-
-    frame.extend(data)
-
-    try:
-        writer.write(frame)
-    except Exception as e:
-        error(f"[WS] send failed: {e}")
 
 class WebSocketClient:
     def __init__(self, writer):
@@ -191,128 +155,6 @@ class WebSocketClient:
     async def send(self, html):
         await ws_send(self.writer, html)
 
-def render_temp(ch, temp, state):
-    if not temp:
-        return f"""
-        <strong id="temp-{ch}" hx-swap-oob="outerHTML">no temp received</strong>
-        """
-    elif state != ProbeState.OK:
-        return f"""
-        <strong id="temp-{ch}" hx-swap-oob="outerHTML">{state}</strong>
-        """
-    else:
-        return f"""
-        <strong id="temp-{ch}" hx-swap-oob="outerHTML">{temp:.1f}</strong>
-        """
-
-def render_unit(unit):
-    return f"""
-    <span hx-swap-oob="innerHTML:.unit">{unit}</span>
-    """
-
-def render_bbq_temp(temp):
-    if not temp:
-        return f"""
-        <strong id="bbq-temp" hx-swap-oob="outerHTML">no temp received</strong>
-        """
-    else:
-        return f"""
-        <strong id="bbq-temp" hx-swap-oob="outerHTML">{temp:.1f}</strong>
-        """
-
-def render_bbq_type_probe(type):
-    return f"""
-    <span id="type-bbq-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{type}</span>
-    """
-
-def render_ch_probe(ch, type, model):
-    return f"""
-    <span id="type-ch-{ch}-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{type}</span>
-    <span id="model-ch-{ch}-probe" hx-swap-oob="outerHTML" class="badge bg-secondary">{model}</span>
-    """
-
-def render_target(ch, target):
-    return f"""
-    <output id="target-{ch}"
-            hx-swap-oob="outerHTML">
-        {target}
-    </output>
-    """
-
-def render_alarm_button(ch, alarm):
-    if alarm:
-        return f"""
-        <button
-            id="alarm-{ch}"
-            class="btn btn-secondary alarm-btn mt-2 w-100 alarm-active"
-            data-ch="{ch}"
-            hx-swap-oob="outerHTML">
-            Confirm alarm
-        </button>
-        """
-    else:
-        return f"""
-        <button
-            id="alarm-{ch}"
-            class="btn btn-secondary alarm-btn mt-2 w-100"
-            data-ch="{ch}"
-            disabled
-            hx-swap-oob="outerHTML">
-            Confirm alarm
-        </button>
-        """
-
-def render_wifi(ssid, rssi):
-    return f"""
-    <span id="ssid" hx-swap-oob="outerHTML" class="ssid-name m-2">{ssid}</span>
-    """
-
-def make_points(values):
-    n = len(values)
-
-    if n < 2:
-        return ""
-
-    vmin = min(values)
-    vmax = max(values)
-
-    # alle Werte gleich
-    if vmax == vmin:
-        return " ".join(
-            f"{i * 100 / (n - 1):.1f},15"
-            for i in range(n)
-        )
-
-    result = []
-
-    for i, value in enumerate(values):
-        x = i * 100 / (n - 1)
-
-        normalized = (value - vmin) / (vmax - vmin)
-
-        y = 28 - normalized * 26
-
-        result.append(f"{x:.1f},{y:.1f}")
-
-    return " ".join(result)
-
-def render_bbq_trend(values):
-    points = make_points(values)
-
-    return f"""
-    <svg
-        id="bbq_trend"
-        hx-swap-oob="outerHTML"
-        class="trend"
-        viewBox="0 0 100 30"
-        preserveAspectRatio="none">
-        <polyline
-            points="{points}"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.0"/>
-    </svg>
-    """
 
 async def ws_push_loop(ws, presenter: "PitNodePresenter"):
     try:
@@ -325,13 +167,13 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
 
         html=""
         for ch in range(len(temps)):
-            html += render_unit(
+            html += ws_views.render_unit(
                 unit=unit
             )
-            html += render_bbq_type_probe(
+            html += ws_views.render_bbq_type_probe(
                 type=probe_types[ch]
             )
-            html += render_ch_probe(
+            html += ws_views.render_ch_probe(
                 ch=ch,
                 type=probe_types[ch],
                 model=probe_model,
@@ -355,32 +197,32 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
 
             html=""
             if len(bbq_history) >= 2:
-                html += render_bbq_trend(bbq_history)
+                html += ws_views.render_bbq_trend(bbq_history)
+
+            html += ws_views.render_bbq_temp(
+                    temp=bbq_temp
+            )
+
+            html += ws_views.render_wifi(
+                    ssid=ssid,
+                    rssi=rssi
+            )
 
             for ch in range(len(temps)):
-                html += render_temp(
+                html += ws_views.render_temp(
                     ch=ch,
                     temp=temps[ch],
                     state=states[ch]
                 )
 
-                html += render_bbq_temp(
-                    temp=bbq_temp
-                )
-
-                html += render_target(
+                html += ws_views.render_target(
                     ch=ch,
                     target=targets[ch]
                 )
 
-                html += render_alarm_button(
+                html += ws_views.render_alarm_button(
                     ch=ch,
                     alarm=alarms[ch]
-                )
-
-                html += render_wifi(
-                    ssid=ssid,
-                    rssi=rssi
                 )
 
             await ws.send(html)
