@@ -6,7 +6,17 @@
 import time
 from pitnode.log.log import info, warn, error
 
+MAX_HISTORY = 100
+
 class MinuteHistory:
+    """
+    Stores one averaged value per minute.
+
+    Samples received within the same minute are averaged and added
+    to the history when the minute changes. Intended for long-term
+    trend data with predictable memory usage.
+    """
+    
     def __init__(self):
         self._current_minute = None
         self._sum = 0
@@ -22,7 +32,12 @@ class MinuteHistory:
         if minute != self._current_minute:
 
             if self._count:
-                self._history.append(self._sum / self._count)
+                self._history.append(
+                    self._sum / self._count
+                )
+
+                if len(self._history) > MAX_HISTORY:
+                    self._history.pop(0)
 
             self._current_minute = minute
             self._sum = 0

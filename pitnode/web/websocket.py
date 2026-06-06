@@ -179,7 +179,8 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
                 model=probe_model,
             )
         await ws.send(html)
-
+        
+        counter = 0
         while True:
             # Probes data
             temps = presenter.get_temps()
@@ -195,39 +196,47 @@ async def ws_push_loop(ws, presenter: "PitNodePresenter"):
             rssi = presenter.get_rssi()
             ssid = presenter.get_connected_ssid()
 
-            html=""
+            parts=[]
             if len(bbq_history) >= 2:
-                html += ws_views.render_bbq_trend(bbq_history)
+                parts.append(ws_views.render_bbq_trend(bbq_history))
 
-            html += ws_views.render_bbq_temp(
+            parts.append(ws_views.render_bbq_temp(
                     temp=bbq_temp
-            )
+            ))
 
-            html += ws_views.render_wifi(
+            parts.append(ws_views.render_wifi(
                     ssid=ssid,
                     rssi=rssi
-            )
+            ))
 
             for ch in range(len(temps)):
-                html += ws_views.render_temp(
+                parts.append(ws_views.render_temp(
                     ch=ch,
                     temp=temps[ch],
                     state=states[ch]
-                )
+                ))
 
-                html += ws_views.render_target(
+                parts.append(ws_views.render_target(
                     ch=ch,
                     target=targets[ch]
-                )
+                ))
 
-                html += ws_views.render_alarm_button(
+                parts.append(ws_views.render_alarm_button(
                     ch=ch,
                     alarm=alarms[ch]
-                )
+                ))
 
+            html = "".join(parts)
             await ws.send(html)
+            
+            counter += 1
+            if counter % 300 == 0:
+                info("WS push alive")
 
             await asyncio.sleep(1)
 
     except (asyncio.CancelledError, OSError):
         info("WS: Push loop stopped.")
+
+    except Exception as ex:
+        error(f"[WS] ERROR: {type(ex).__name__}: {ex}")

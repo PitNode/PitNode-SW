@@ -57,6 +57,8 @@ def render_alarm_button(ch, alarm):
             id="alarm-{ch}"
             class="btn btn-secondary alarm-btn mt-2 w-100 alarm-active"
             data-ch="{ch}"
+            hx-post="/api/confirm-alarm"
+            hx-vals='{{"ch":{ch}}}'
             hx-swap-oob="outerHTML">
             Confirm alarm
         </button>
@@ -67,6 +69,8 @@ def render_alarm_button(ch, alarm):
             id="alarm-{ch}"
             class="btn btn-secondary alarm-btn mt-2 w-100"
             data-ch="{ch}"
+            hx-post="/api/confirm-alarm"
+            hx-vals='{{"ch":{ch}}}'
             disabled
             hx-swap-oob="outerHTML">
             Confirm alarm

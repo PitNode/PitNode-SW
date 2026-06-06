@@ -32,7 +32,7 @@ def render_channel(ch, unit):
     <div class="col-12 col-md-6 col-lg-4">
         <div class="card ch-card h-100 bg-dark bg-gradient text-primary">
             <div class="card-header d-flex align-items-center">
-                <span class="ch-circle" style="background-color:{CH_COLORS[ch]};"></span>
+                <span class="ch-circle" style="background-color:{CH_COLORS[ch]}; margin-right: 8px;"></span>
                 <span class="ch-title text-primary">
                     Channel {ch+1}
                 </span>
